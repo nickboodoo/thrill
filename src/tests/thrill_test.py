@@ -256,11 +256,11 @@ class CombatScreen(GameScreen):
         player_mana_bar = f"{'█' * player_mana_blocks}{' ' * (max_mana_blocks - player_mana_blocks)}"
         print(f"\n       Mana: {player_mana_bar} {self.player.mana}/100")  # Adjust if your max mana differs
 
-        print(f"\n\nEnemy    HP: {enemy_health_bar} {self.enemy.health}/{self.enemy.max_health}")
+        print(f"\n\nEnemy    HP: {enemy_health_bar} {self.enemy.health}/{self.enemy.max_health}\n")
         super().print_dashes()
 
     def display_combat_options(self):
-        print("\nChoose your action: \n1. Attack \n2. Magic")
+        print("Choose your action: \n1. Attack \n2. Magic")
 
     def handle_combat_action(self):
         action = input("Action: ")
@@ -289,7 +289,8 @@ class CombatScreen(GameScreen):
         return 'continue'
 
     def display(self):
-        print(f"You encounter an enemy! The fight begins. It's a {self.enemy.name}.")
+        super().print_dashes()
+        print(f"You encounter an enemy! The fight begins. It's a {self.enemy.name}.".center(72, ' '))
         self.display_health_bars()
         while self.player.is_alive() and self.enemy.is_alive():
             self.display_combat_options()
