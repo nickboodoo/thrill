@@ -1,2 +1,4 @@
+make a glossary so the player can read what spells do
+
 
 
