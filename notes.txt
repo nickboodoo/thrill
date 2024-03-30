@@ -1,4 +1,5 @@
 make a glossary so the player can read what spells do
 
+work on screen formatting
 
-
+add ascii art

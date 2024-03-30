@@ -1,6 +1,7 @@
 import random
 import os
 import csv
+import textwrap
 
 class Character:
     def __init__(self, name, health, attack, mana=0):
@@ -31,8 +32,14 @@ class Enemy(Character):
     def load_enemies_from_csv(cls, filepath):
         with open(filepath, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
+            cls.enemies = []
             for row in reader:
-                cls.enemies.append({"name": row["name"], "health": int(row["health"]), "attack": int(row["attack"])})
+                cls.enemies.append({
+                    "name": row["name"], 
+                    "health": int(row["health"]), 
+                    "attack": int(row["attack"]),
+                    "lore": row.get("lore", "Lore not available.")
+                })
 
     @staticmethod
     def generate_random_enemy():
@@ -40,6 +47,16 @@ class Enemy(Character):
             Enemy.load_enemies_from_csv('src/tests/enemies.csv')
         enemy_info = random.choice(Enemy.enemies)
         return Enemy(enemy_info["name"], enemy_info["health"], enemy_info["attack"])
+
+    @staticmethod
+    def format_enemy_info(enemy):
+        name_and_stats = f'{enemy["name"]} ({enemy["health"]} HP, {enemy["attack"]} Attack):\n'
+        lore = f'"{enemy["lore"]}"'
+        wrapped_lore_lines = textwrap.wrap(lore, width=GameScreen.LORE_TEXT_WIDTH)
+        centered_lore_lines = [line.center(GameScreen.LORE_TEXT_WIDTH) for line in wrapped_lore_lines]
+        centered_lore = "\n".join(centered_lore_lines)
+        info = f"{name_and_stats}\n{centered_lore}"
+        return info
 
 class Player(Character):
     def __init__(self, name='Player', health=100, attack=25, mana=100):
@@ -129,17 +146,104 @@ class Map:
             random.choice(self.nodes[1:]).enemy = Enemy.generate_random_enemy()  # Skip Room 0 for enemy placement
 
 class GameScreen:
+    DASH_WIDTH = 72
+    LORE_TEXT_WIDTH = 65
+
     def __init__(self, location):
         self.location = location
 
     def clear_screen(self):
         os.system('cls' if os.name == 'nt' else 'clear')
 
-    def print_dashes(self, x=72):
-        print('-' * x)
+    def print_dashes(self):
+        print('-' * self.DASH_WIDTH)
 
     def display(self):
         pass
+
+class GlossaryScreen(GameScreen):
+    MAX_ENTRIES_PER_COLUMN = 10
+
+    def display(self):
+        while True:
+            self.clear_screen()
+            print("Glossary Menu:")
+            print("1. Spells")
+            print("2. Enemies")
+            print("3. Back")
+            choice = input("Choose a category: ")
+
+            if choice == '1':
+                self.display_spells()
+            elif choice == '2':
+                self.display_enemies()
+            elif choice == '3':
+                break
+            else:
+                print("Invalid choice.")
+            input("Press Enter to continue...")
+
+    def display_spells(self):
+        self.clear_screen()
+        print("Spells:")
+        print("Heal - Restores 50 HP, Costs 25 Mana")
+        print("Smite - Triple damage if enemy below 25% HP")
+        print("Unseen Predator - No damage for 3 turns, deal 50% less damage")
+        print("Mana Reave - Deals 75% less damage, restores 50 Mana")
+
+    def display_enemies(self):
+        self.clear_screen()
+        print("Select an enemy to learn more:")
+        enemies = Enemy.enemies
+
+        columns = (len(enemies) + self.MAX_ENTRIES_PER_COLUMN - 1) // self.MAX_ENTRIES_PER_COLUMN
+
+        max_name_length = max(len(enemy["name"]) for enemy in enemies) + 4
+        column_width = max_name_length + len(str(len(enemies))) + 2
+
+        for i in range(self.MAX_ENTRIES_PER_COLUMN):
+            row = []
+            for j in range(columns):
+                index = i + j * self.MAX_ENTRIES_PER_COLUMN
+                if index < len(enemies):
+                    cell = f"{index + 1}. {enemies[index]['name']}".ljust(column_width)
+                    row.append(cell)
+            if row:
+                print("".join(row))
+
+        print("\n0. Back")
+        choice = input("\nEnter your choice: ")
+        self.handle_choice(choice)
+
+    def handle_choice(self, choice):
+        if choice.isdigit():
+            choice = int(choice)
+            if choice == 0:
+                return
+            elif 1 <= choice <= len(Enemy.enemies):
+                selected_enemy = Enemy.enemies[choice - 1]
+                EnemyDetailScreen(self.location, selected_enemy).display()
+            else:
+                print("Invalid choice.")
+                input("Press Enter to try again...")
+                self.display_enemies()
+        else:
+            print("Please enter a number.")
+            input("Press Enter to try again...")
+            self.display_enemies()
+
+class EnemyDetailScreen(GameScreen):
+    def __init__(self, location, enemy):
+        super().__init__(location)
+        self.enemy = enemy
+
+    def display(self):
+        self.clear_screen()
+        enemy_info = Enemy.format_enemy_info(self.enemy)
+        print("Enemy Details:")
+        self.print_dashes()
+        print(enemy_info)
+        self.print_dashes()
 
 class VictoryScreen(GameScreen):
     def display(self):
@@ -187,15 +291,17 @@ class ExplorationScreen(GameScreen):
             print("Connections:")
             for i, connection in enumerate(self.location.connections):
                 print(f" {i + 1}: {connection.name}")
-            print("\nChoose an action: \n l: List rooms \n [number]: Move to connection \n q: Quit")
+            print("\nChoose an action: \n l: List rooms \n g: Glossary \n [number]: Move to connection \n q: Quit")
             
             action = input("What do you want to do? ")
             self.clear_screen()
 
             if action == 'l':
                 self.display_rooms(self.game_loop.graph.nodes)
+            elif action == 'g':
+                GlossaryScreen(self.location).display()
             elif action.isdigit() and int(action) - 1 < len(self.location.connections):
-                self.move_to_location(self.location.connections[int(action) - 1])  # Adjusted to use the new method
+                self.move_to_location(self.location.connections[int(action) - 1])
                 self.game_loop.current_node.visited = True
                 break
             elif action == 'q':
