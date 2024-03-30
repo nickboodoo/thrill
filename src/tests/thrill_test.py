@@ -1,5 +1,6 @@
 import random
 import os
+import csv
 
 class Character:
     def __init__(self, name, health, attack, mana=0):
@@ -16,7 +17,7 @@ class Character:
     def attack(self, target):
         damage = random.randint(1, self.strength)
         if self.is_immune:
-            damage //= 2  # Reduce damage if under unseen predator effect
+            damage //= 2
         target.health -= damage
         return damage
     
@@ -24,41 +25,19 @@ class Character:
         pass
 
 class Enemy(Character):
-    enemies = [
-    {"name": "Riverblade Marauder", "health": 35, "attack": 12},
-    {"name": "Jungle Stalker", "health": 30, "attack": 7},
-    {"name": "Canopy Assassin", "health": 28, "attack": 15},
-    {"name": "Swamp Witch", "health": 50, "attack": 8},
-    {"name": "Pirate Cannoneer", "health": 40, "attack": 25},
-    {"name": "Vine Shaman", "health": 45, "attack": 5},
-    {"name": "Mud Golem", "health": 80, "attack": 10},
-    {"name": "Crimson Duelist", "health": 35, "attack": 18},
-    {"name": "Raptor Rider", "health": 55, "attack": 12},
-    {"name": "Serpent Priestess", "health": 40, "attack": 8},
-    {"name": "Crocodile Brute", "health": 70, "attack": 15},
-    {"name": "Piranha Swarmer", "health": 20, "attack": 5},
-    {"name": "Quicksand Guardian", "health": 60, "attack": 10},
-    {"name": "Plunder Captain", "health": 65, "attack": 20},
-    {"name": "Thunderbird Caller", "health": 50, "attack": 10},
-    {"name": "Tidal Raider", "health": 45, "attack": 20},
-    {"name": "Jungle Berserker", "health": 55, "attack": 18},
-    {"name": "Mangrove Mystic", "health": 30, "attack": 12},
-    {"name": "Coralblade Siren", "health": 40, "attack": 16},
-    {"name": "Scurvy Sharpshooter", "health": 35, "attack": 22},
-    {"name": "Bamboo Witchdoctor", "health": 50, "attack": 9},
-    {"name": "Fen Beast", "health": 75, "attack": 14},
-    {"name": "Scarlet Buccaneer", "health": 60, "attack": 19},
-    {"name": "Voodoo Harpy", "health": 45, "attack": 7},
-    {"name": "Sapphire Pirate", "health": 40, "attack": 21},
-    {"name": "Giant Anaconda", "health": 80, "attack": 12},
-    {"name": "Tribal Spearman", "health": 35, "attack": 10},
-    {"name": "Cave Dweller", "health": 50, "attack": 11},
-    {"name": "Reef Marauder", "health": 55, "attack": 17},
-    {"name": "Tiki Torchbearer", "health": 30, "attack": 14}
-]
+    enemies = []
+
+    @classmethod
+    def load_enemies_from_csv(cls, filepath):
+        with open(filepath, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                cls.enemies.append({"name": row["name"], "health": int(row["health"]), "attack": int(row["attack"])})
 
     @staticmethod
     def generate_random_enemy():
+        if not Enemy.enemies:
+            Enemy.load_enemies_from_csv('src/tests/enemies.csv')
         enemy_info = random.choice(Enemy.enemies)
         return Enemy(enemy_info["name"], enemy_info["health"], enemy_info["attack"])
 
@@ -170,7 +149,7 @@ class VictoryScreen(GameScreen):
         print("\nWould you like to play again? (yes/no)")
         choice = input().lower()
         if choice == 'yes':
-            game = GameLoop()
+            game = StateEngine()
             game.play()
         else:
             print("Thank you for playing! Goodbye.")
@@ -183,7 +162,7 @@ class DefeatScreen(GameScreen):
         print("\nWould you like to try again? (yes/no)")
         choice = input().lower()
         if choice == 'yes':
-            game = GameLoop()
+            game = StateEngine()
             game.play()
         else:
             print("Thank you for playing! Better luck next time.")
@@ -338,7 +317,7 @@ class MagicMenuScreen(GameScreen):
             input("Press Enter to continue...")
             break
 
-class GameLoop:
+class StateEngine:
     def __init__(self, size=3):
         self.graph = Map(size)
         self.current_node = self.graph.nodes[0]
@@ -372,5 +351,5 @@ class GameLoop:
         return True
 
 if __name__ == "__main__":
-    game = GameLoop()
+    game = StateEngine()
     game.play()
