@@ -177,18 +177,27 @@ class ExplorationScreen(GameScreen):
         self.clear_screen()
 
 class CombatScreen(GameScreen):
-    def __init__(self, location, player, enemy):
+    def __init__(self, location, player, enemy, game_loop):  # Add game_loop parameter
         super().__init__(location)
         self.player = player
         self.enemy = enemy
+        self.game_loop = game_loop
 
     def display_health_bars(self):
-        # Updated to use max_health for both player and enemy
-        print(f"Player HP: {self.player.health}/{self.player.max_health}   Enemy HP: {self.enemy.health}/{self.enemy.max_health}")
+        player_health_blocks = int((self.player.health / self.player.max_health) * 20)
+        enemy_health_blocks = int((self.enemy.health / self.enemy.max_health) * 20)
+
+        # Creating the health bar strings
+        player_health_bar = f"{'█' * player_health_blocks}{' ' * (20 - player_health_blocks)}"
+        enemy_health_bar = f"{'█' * enemy_health_blocks}{' ' * (20 - enemy_health_blocks)}"
+
+        # Now, use two lines for the print statement to keep it tidy
+        print(f"Player   HP: {player_health_bar} {self.player.health}/{self.player.max_health}")
+        print(f"\nEnemy    HP: {enemy_health_bar} {self.enemy.health}/{self.enemy.max_health}")
 
     def display_combat_options(self):
         # self.display_health_bars()  # Display health bars before showing options
-        print("Choose your action: \n1. Attack \n2. Magic \n3. Flee")
+        print("Choose your action: \n1. Attack \n2. Magic")
 
     def handle_combat_action(self):
         action = input("Action: ")
@@ -204,9 +213,6 @@ class CombatScreen(GameScreen):
             print(f"The {self.enemy.name} attacks you for {damage_taken} damage.")
         elif action == "2":
             MagicMenuScreen(self.location, self.player).display()
-        elif action == "3":
-            print("You flee back to the previous location.")
-            return 'fled'
         else:
             print("Invalid action, try again.")
         self.display_health_bars()  # Update and display health bars after actions
@@ -214,6 +220,7 @@ class CombatScreen(GameScreen):
 
     def display(self):
         print(f"You encounter an enemy! The fight begins. It's a {self.enemy.name}.")
+        self.display_health_bars()
         while self.player.is_alive() and self.enemy.is_alive():
             self.display_combat_options()
             result = self.handle_combat_action()
@@ -250,7 +257,13 @@ class GameLoop:
     def __init__(self, size=3):
         self.graph = Map(size)
         self.current_node = self.graph.nodes[0]
+        self.previous_node = None  # Initialize previous_node as None
         self.player = Player()
+
+    def move_to_location(self, new_location):
+        if self.current_node is not None:
+            self.previous_node = self.current_node
+        self.current_node = new_location
 
     def update_screen(self):
         if not self.player.is_alive():
@@ -258,7 +271,8 @@ class GameLoop:
         elif self.have_defeated_all_enemies():
             self.current_screen = VictoryScreen(self.current_node)
         elif self.current_node.enemy and self.current_node.enemy.is_alive():
-            self.current_screen = CombatScreen(self.current_node, self.player, self.current_node.enemy)
+            # Pass 'self' to provide GameLoop reference to CombatScreen
+            self.current_screen = CombatScreen(self.current_node, self.player, self.current_node.enemy, self)
         else:
             self.current_screen = ExplorationScreen(self.current_node, self)
 
@@ -271,7 +285,6 @@ class GameLoop:
             DefeatScreen(self.current_node).display()
         elif self.have_defeated_all_enemies():
             VictoryScreen(self.current_node).display()
-
 
     def have_defeated_all_enemies(self):
         # Check each node for an alive enemy to accurately reflect the game's win condition
