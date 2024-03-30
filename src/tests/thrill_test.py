@@ -36,7 +36,22 @@ class Enemy(Character):
     {"name": "Piranha Swarmer", "health": 20, "attack": 5},
     {"name": "Quicksand Guardian", "health": 60, "attack": 10},
     {"name": "Plunder Captain", "health": 65, "attack": 20},
-    {"name": "Thunderbird Caller", "health": 50, "attack": 10}
+    {"name": "Thunderbird Caller", "health": 50, "attack": 10},
+    {"name": "Tidal Raider", "health": 45, "attack": 20},
+    {"name": "Jungle Berserker", "health": 55, "attack": 18},
+    {"name": "Mangrove Mystic", "health": 30, "attack": 12},
+    {"name": "Coralblade Siren", "health": 40, "attack": 16},
+    {"name": "Scurvy Sharpshooter", "health": 35, "attack": 22},
+    {"name": "Bamboo Witchdoctor", "health": 50, "attack": 9},
+    {"name": "Fen Beast", "health": 75, "attack": 14},
+    {"name": "Scarlet Buccaneer", "health": 60, "attack": 19},
+    {"name": "Voodoo Harpy", "health": 45, "attack": 7},
+    {"name": "Sapphire Pirate", "health": 40, "attack": 21},
+    {"name": "Giant Anaconda", "health": 80, "attack": 12},
+    {"name": "Tribal Spearman", "health": 35, "attack": 10},
+    {"name": "Cave Dweller", "health": 50, "attack": 11},
+    {"name": "Reef Marauder", "health": 55, "attack": 17},
+    {"name": "Tiki Torchbearer", "health": 30, "attack": 14}
 ]
 
     @staticmethod
