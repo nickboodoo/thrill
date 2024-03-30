@@ -18,7 +18,6 @@ class Character:
         return damage
     
     def cast_spell(self, spell_name, target):
-        """Placeholder for casting spells."""
         pass
 
 class Enemy(Character):
@@ -141,6 +140,11 @@ class ExplorationScreen(GameScreen):
         super().__init__(location)
         self.game_loop = game_loop
 
+    def move_to_location(self, new_location):
+        if self.game_loop.current_node is not None:
+            self.game_loop.previous_node = self.game_loop.current_node
+        self.game_loop.current_node = new_location
+
     def display(self):
         while True:
             self.clear_screen()
@@ -158,7 +162,7 @@ class ExplorationScreen(GameScreen):
             if action == 'l':
                 self.display_rooms(self.game_loop.graph.nodes)
             elif action.isdigit() and int(action) - 1 < len(self.location.connections):
-                self.game_loop.current_node = self.location.connections[int(action) - 1]
+                self.move_to_location(self.location.connections[int(action) - 1])  # Adjusted to use the new method
                 self.game_loop.current_node.visited = True
                 break
             elif action == 'q':
@@ -177,7 +181,7 @@ class ExplorationScreen(GameScreen):
         self.clear_screen()
 
 class CombatScreen(GameScreen):
-    def __init__(self, location, player, enemy, game_loop):  # Add game_loop parameter
+    def __init__(self, location, player, enemy, game_loop):
         super().__init__(location)
         self.player = player
         self.enemy = enemy
@@ -187,16 +191,13 @@ class CombatScreen(GameScreen):
         player_health_blocks = int((self.player.health / self.player.max_health) * 20)
         enemy_health_blocks = int((self.enemy.health / self.enemy.max_health) * 20)
 
-        # Creating the health bar strings
         player_health_bar = f"{'█' * player_health_blocks}{' ' * (20 - player_health_blocks)}"
         enemy_health_bar = f"{'█' * enemy_health_blocks}{' ' * (20 - enemy_health_blocks)}"
 
-        # Now, use two lines for the print statement to keep it tidy
         print(f"Player   HP: {player_health_bar} {self.player.health}/{self.player.max_health}")
         print(f"\nEnemy    HP: {enemy_health_bar} {self.enemy.health}/{self.enemy.max_health}")
 
     def display_combat_options(self):
-        # self.display_health_bars()  # Display health bars before showing options
         print("Choose your action: \n1. Attack \n2. Magic")
 
     def handle_combat_action(self):
@@ -215,7 +216,7 @@ class CombatScreen(GameScreen):
             MagicMenuScreen(self.location, self.player).display()
         else:
             print("Invalid action, try again.")
-        self.display_health_bars()  # Update and display health bars after actions
+        self.display_health_bars()
         return 'continue'
 
     def display(self):
@@ -257,13 +258,8 @@ class GameLoop:
     def __init__(self, size=3):
         self.graph = Map(size)
         self.current_node = self.graph.nodes[0]
-        self.previous_node = None  # Initialize previous_node as None
+        self.previous_node = None
         self.player = Player()
-
-    def move_to_location(self, new_location):
-        if self.current_node is not None:
-            self.previous_node = self.current_node
-        self.current_node = new_location
 
     def update_screen(self):
         if not self.player.is_alive():
@@ -271,7 +267,6 @@ class GameLoop:
         elif self.have_defeated_all_enemies():
             self.current_screen = VictoryScreen(self.current_node)
         elif self.current_node.enemy and self.current_node.enemy.is_alive():
-            # Pass 'self' to provide GameLoop reference to CombatScreen
             self.current_screen = CombatScreen(self.current_node, self.player, self.current_node.enemy, self)
         else:
             self.current_screen = ExplorationScreen(self.current_node, self)
@@ -287,11 +282,10 @@ class GameLoop:
             VictoryScreen(self.current_node).display()
 
     def have_defeated_all_enemies(self):
-        # Check each node for an alive enemy to accurately reflect the game's win condition
         for node in self.graph.nodes:
             if node.enemy and node.enemy.is_alive():
-                return False  # There's at least one enemy alive
-        return True  # All enemies are defeated
+                return False
+        return True
 
 if __name__ == "__main__":
     game = GameLoop()
