@@ -156,7 +156,6 @@ class AboutGameScreen(GameScreen):
         self.print_dashes()
         input("\nPress Enter to return to the Glossary...")
 
-
 class EnemyGlossaryScreen(GameScreen):
     MAX_ENTRIES_PER_COLUMN = 10
 
@@ -406,14 +405,67 @@ class CombatScreen(GameScreen):
         while self.player.is_alive() and self.enemy.is_alive():
             self.display_combat_options()
             result = self.handle_combat_action()
-            if result in ['enemy_defeated', 'fled']:
-                break
-            if not self.player.is_alive():
+            if result == 'enemy_defeated':
+                CombatVictoryScreen(self.location, self.player, self.game_loop).display()
+                return
+            elif result == 'player_defeated':
                 print("Game Over. You have been defeated.")
                 break
+        
+        if not self.player.is_alive():
+            DefeatScreen(self.location, self.game_loop).display()
+
+class CombatVictoryScreen(GameScreen):
+    def __init__(self, location, player, game_loop):
+        super().__init__(location, game_loop)
+        self.player = player
+
+    def display(self):
+        victory_message = f"You have defeated the enemy in {self.location.name}! " \
+                          "You take a moment to catch your breath and prepare for the next challenge."
+        
+        self.clear_screen()
+        self.print_dashes()
+        print("Victory!".center(self.DASH_WIDTH))
+        self.print_dashes()
+
+        wrapped_victory_message = textwrap.wrap(victory_message, width=65)
+        for line in wrapped_victory_message:
+            print(line.center(self.DASH_WIDTH))
+
+        self.print_dashes()
+        print("Choose your next action:")
+        print("1. Continue Exploring")
+        print("2. View Character Status")
+        print("3. Open the Glossary")
+        self.print_dashes()
+        choice = input("What do you want to do? ")
+
+        if choice == '1':
+            self.game_loop.update_screen()
+        elif choice == '2':
+            self.view_character_status()
+        elif choice == '3':
+            GlossaryScreen(self.location, self.game_loop).display()
+        else:
+            print("Invalid choice, try again.")
+            input("Press Enter to continue...")
+            self.display()
+
+    def view_character_status(self):
+        self.clear_screen()
+        self.print_dashes()
+        print(f"Character Status: {self.player.name}".center(self.DASH_WIDTH))
+        self.print_dashes()
+        print(f"Health: {self.player.health}/{self.player.max_health}")
+        print(f"Attack: {self.player.strength}")
+        print(f"Mana: {self.player.mana}")
+        self.print_dashes()
+        input("Press Enter to return to victory screen...")
+        self.display()
 
 class StateEngine:
-    def __init__(self, size=3):
+    def __init__(self, size=5):
         self.graph = Map(size)
         self.current_node = self.graph.nodes[0]
         self.previous_node = None
