@@ -118,21 +118,44 @@ class GlossaryScreen(GameScreen):
             self.print_dashes()
             print("Glossary Menu:".center(90))
             self.print_dashes()
-            print("1. Enemies")
+            print("1. About the Game")
             print("2. Rooms")
-            print("3. Back")
+            print("3. Enemies")
+            print("4. Back")
             self.print_dashes()
             choice = input("Choose a category: ")
 
             if choice == '1':
-                EnemyGlossaryScreen(self.location, self.game_loop).display()  # Assuming EnemyGlossaryScreen now accepts game_loop
+                AboutGameScreen(self.location, self.game_loop).display()
             elif choice == '2':
                 RoomGlossaryScreen(self.location, self.game_loop).display()
             elif choice == '3':
+                EnemyGlossaryScreen(self.location, self.game_loop).display()
+            elif choice == '4':
                 break
             else:
                 print("Invalid choice.")
             input("Press Enter to continue...")
+
+class AboutGameScreen(GameScreen):
+    def __init__(self, location, game_loop):
+        super().__init__(location, game_loop)
+
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+        print("About the Game".center(90))
+        self.print_dashes()
+        game_about_lore = """Thrill is developed and written by Nick Boodoo. 
+                            This game is loosely based on the Thrill of the Hunt 
+                            concept inspired by Rengar from League of Legends."""
+        wrapped_about_lore = textwrap.wrap(game_about_lore, width=75)
+        for line in wrapped_about_lore:
+            # Center each line individually
+            print(line.center(90))
+        self.print_dashes()
+        input("\nPress Enter to return to the Glossary...")
+
 
 class EnemyGlossaryScreen(GameScreen):
     MAX_ENTRIES_PER_COLUMN = 10
