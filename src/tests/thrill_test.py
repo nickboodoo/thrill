@@ -61,24 +61,6 @@ class Player(Character):
         self.max_health = 100
         self.unseen_predator_turns = 0
 
-    def heal(self):
-        heal_cost = 25
-        heal_amount = 50
-        if self.mana >= heal_cost and self.health < self.max_health:
-            self.mana -= heal_cost
-            self.health = min(self.health + heal_amount, self.max_health)
-            return heal_amount
-        else:
-            print("Not enough mana or health is full!")
-            return 0
-
-    def update_effects(self):
-        if self.unseen_predator_turns > 0:
-            self.unseen_predator_turns -= 1
-            if self.unseen_predator_turns == 0:
-                self.is_immune = False
-                print("Unseen Predator's effect has worn off.")
-
 class Location:
     def __init__(self, name, generate_enemy_flag=True):
         self.name = name
@@ -109,10 +91,8 @@ class Map:
                 self.nodes[i].connect(random.choice(self.nodes[:i]))
 
     def ensure_at_least_one_enemy(self):
-        # Ensure at least one enemy exists on the map
         if not any(node.enemy for node in self.nodes):
-            # Randomly select a location to place an enemy if none exist
-            random.choice(self.nodes[1:]).enemy = Enemy.generate_random_enemy()  # Skip Room 0 for enemy placement
+            random.choice(self.nodes[1:]).enemy = Enemy.generate_random_enemy()
 
 class GameScreen:
     DASH_WIDTH = 72
@@ -130,7 +110,7 @@ class GameScreen:
     def display(self):
         pass
 
-class GlossaryScreen(GameScreen):
+class EnemyGlossaryScreen(GameScreen):
     MAX_ENTRIES_PER_COLUMN = 10
 
     def display(self):
@@ -257,7 +237,7 @@ class ExplorationScreen(GameScreen):
             if action == 'l':
                 self.display_rooms(self.game_loop.graph.nodes)
             elif action == 'g':
-                GlossaryScreen(self.location).display()
+                EnemyGlossaryScreen(self.location).display()
             elif action.isdigit() and int(action) - 1 < len(self.location.connections):
                 self.move_to_location(self.location.connections[int(action) - 1])
                 self.game_loop.current_node.visited = True
@@ -285,7 +265,6 @@ class CombatScreen(GameScreen):
         self.game_loop = game_loop
 
     def display_health_bars(self):
-        # Display Health
         super().print_dashes()
         player_health_blocks = int((self.player.health / self.player.max_health) * 20)
         enemy_health_blocks = int((self.enemy.health / self.enemy.max_health) * 20)
@@ -293,11 +272,10 @@ class CombatScreen(GameScreen):
         enemy_health_bar = f"{'█' * enemy_health_blocks}{' ' * (20 - enemy_health_blocks)}"
         print(f"\nPlayer   HP: {player_health_bar} {self.player.health}/{self.player.max_health}")
 
-        # Display Mana
-        max_mana_blocks = 20  # Assuming 100 is the max mana for uniform bar size
-        player_mana_blocks = int((self.player.mana / 100) * max_mana_blocks)  # Adjust if your max mana differs
+        max_mana_blocks = 20
+        player_mana_blocks = int((self.player.mana / 100) * max_mana_blocks)
         player_mana_bar = f"{'█' * player_mana_blocks}{' ' * (max_mana_blocks - player_mana_blocks)}"
-        print(f"\n       Mana: {player_mana_bar} {self.player.mana}/100")  # Adjust if your max mana differs
+        print(f"\n       Mana: {player_mana_bar} {self.player.mana}/100")
 
         print(f"\n\nEnemy    HP: {enemy_health_bar} {self.enemy.health}/{self.enemy.max_health}\n")
         super().print_dashes()
@@ -315,12 +293,12 @@ class CombatScreen(GameScreen):
             if not self.enemy.is_alive():
                 print(f"The {self.enemy.name} is defeated.")
                 return 'enemy_defeated'
-
-            if not self.player.is_immune:
-                damage_taken = self.enemy.attack(self.player)
-                print(f"The {self.enemy.name} attacks you for {damage_taken} damage.")
-            else:
-                print("The Unseen Predator effect protects you. You take no damage this turn.")
+            
+            damage_taken = self.enemy.attack(self.player)
+            print(f"The {self.enemy.name} attacks you for {damage_taken} damage.")
+            if not self.player.is_alive():
+                print("You have been defeated.")
+                return 'player_defeated'
 
         else:
             print("Invalid action, try again.")
