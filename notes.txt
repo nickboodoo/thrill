@@ -1,19 +1,17 @@
 add ascii art
 
+implement:
+1. an inventory system
+    where do i want it to be accessed from
+    want do i want it to show
+    make an inventory screen
+2. scroll items
+    lore screen for scrolls
+3. functionality for each scroll
+4. scroll items as loot from combatvictory
 
-magic class:
 
-spells: 
-    heal (heals 10hp, costs 15 mana, [add lore]), 
-    great heal (heals 30, costs 40 mana, [add lore]), 
-    full heal (heals 100 hp, costs 75 mana, [add lore]), 
-    fireball (deals 10 damage, costs 15 mana, [add lore]), 
-    flame arc (deals 30 damage, costs 40 mana, [add lore]), 
-    wrath of the dark soul (deals 75 damage, costs 25 hp, [add lore]). 
-enchantments: 
-    stun (stuns enemy for 3 turns, they cannot use any attack for duration, [add lore]), 
-    fear (causes the enemy to hurt itself for 50% of its normal damage, costs 45 mana, [add lore]), 
-        confuse (30% chance for the enemy to heal the player for 45 hp, 
-            30% chance the enemy to deal triple its damage to the user, 
-            40% chance for the enemy to hurt itself for triple its damage, costs 25 mana, [add lore]), 
-    unseen predator (causes the player to go immune for 3 turns, costs 60 mana, [add lore]) for this code 
+store feature
+buy scrolls
+buy heal potions
+buy mana potions
