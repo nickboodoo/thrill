@@ -95,11 +95,12 @@ class Map:
             random.choice(self.nodes[1:]).enemy = Enemy.generate_random_enemy()
 
 class GameScreen:
-    DASH_WIDTH = 72
+    DASH_WIDTH = 90
     LORE_TEXT_WIDTH = 65
 
-    def __init__(self, location):
+    def __init__(self, location, game_loop=None):
         self.location = location
+        self.game_loop = game_loop
 
     def clear_screen(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -110,28 +111,40 @@ class GameScreen:
     def display(self):
         pass
 
-class EnemyGlossaryScreen(GameScreen):
-    MAX_ENTRIES_PER_COLUMN = 10
-
+class GlossaryScreen(GameScreen):
     def display(self):
         while True:
             self.clear_screen()
-            print("Glossary Menu:")
+            self.print_dashes()
+            print("Glossary Menu:".center(90))
+            self.print_dashes()
             print("1. Enemies")
-            print("2. Back")
+            print("2. Rooms")
+            print("3. Back")
+            self.print_dashes()
             choice = input("Choose a category: ")
 
             if choice == '1':
-                self.display_enemies()
+                EnemyGlossaryScreen(self.location, self.game_loop).display()  # Assuming EnemyGlossaryScreen now accepts game_loop
             elif choice == '2':
+                RoomGlossaryScreen(self.location, self.game_loop).display()
+            elif choice == '3':
                 break
             else:
                 print("Invalid choice.")
             input("Press Enter to continue...")
 
+class EnemyGlossaryScreen(GameScreen):
+    MAX_ENTRIES_PER_COLUMN = 10
+
+    def display(self):
+        self.display_enemies()
+
     def display_enemies(self):
         self.clear_screen()
-        print("Select an enemy to learn more:")
+        self.print_dashes()
+        print("Select an enemy to learn more:".center(90))
+        self.print_dashes()
         enemies = Enemy.enemies
 
         columns = (len(enemies) + self.MAX_ENTRIES_PER_COLUMN - 1) // self.MAX_ENTRIES_PER_COLUMN
@@ -150,6 +163,7 @@ class EnemyGlossaryScreen(GameScreen):
                 print("".join(row))
 
         print("\n0. Back")
+        self.print_dashes()
         choice = input("\nEnter your choice: ")
         self.handle_choice(choice)
 
@@ -170,6 +184,43 @@ class EnemyGlossaryScreen(GameScreen):
             input("Press Enter to try again...")
             self.display_enemies()
 
+class RoomGlossaryScreen(GameScreen):
+    def __init__(self, location, game_loop):
+        super().__init__(location, game_loop)
+
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+        print("Rooms List:".center(90))
+        self.print_dashes()
+        for i, node in enumerate(self.game_loop.graph.nodes):
+            visited_status = "Visited" if node.visited else "Not Visited"
+            print(f"{i + 1}. {node.name}: {visited_status}")
+        
+        print("\n0. Back")
+        self.print_dashes()
+        choice = input("\nEnter your choice to see connections or 0 to go back: ")
+        
+        if choice.isdigit():
+            choice = int(choice) - 1
+            if 0 <= choice < len(self.game_loop.graph.nodes):
+                self.display_connections(self.game_loop.graph.nodes[choice])
+            elif choice == -1:
+                return
+            else:
+                print("Invalid choice.")
+                input("Press Enter to try again...")
+                self.display()
+        else:
+            print("Please enter a number.")
+            input("Press Enter to try again...")
+            self.display()
+
+    def display_connections(self, node):
+        # Transition to RoomDetailScreen instead of displaying connections directly
+        detail_screen = RoomDetailScreen(self.location, self.game_loop, node)
+        detail_screen.display()
+
 class EnemyDetailScreen(GameScreen):
     def __init__(self, location, enemy):
         super().__init__(location)
@@ -178,9 +229,27 @@ class EnemyDetailScreen(GameScreen):
     def display(self):
         self.clear_screen()
         enemy_info = Enemy.format_enemy_info(self.enemy)
-        print("Enemy Details:")
+        self.print_dashes()
+        print("Enemy Details:".center(90))
         self.print_dashes()
         print(enemy_info)
+        self.print_dashes()
+
+class RoomDetailScreen(GameScreen):
+    def __init__(self, location, game_loop, room):
+        super().__init__(location, game_loop)
+        self.room = room  # The room whose details are to be displayed
+
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+        print(f"Room Details: {self.room.name}".center(self.DASH_WIDTH))
+        self.print_dashes()
+        visited_status = "Visited" if self.room.visited else "Not Visited"
+        print(f"Visited Status: {visited_status}")
+        print("Connections:")
+        for i, connected_node in enumerate(self.room.connections):
+            print(f" {i + 1}. {connected_node.name}")
         self.print_dashes()
 
 class VictoryScreen(GameScreen):
@@ -223,26 +292,27 @@ class ExplorationScreen(GameScreen):
     def display(self):
         while True:
             self.clear_screen()
-            print(f"You are in {self.location.name}.")
+            self.print_dashes()
+            print(f"You are in {self.location.name}.".center(self.DASH_WIDTH))
+            self.print_dashes()
             if self.location.enemy and self.location.enemy.is_alive():
                 print(f"An enemy {self.location.enemy.name} is here!")
             print("Connections:")
             for i, connection in enumerate(self.location.connections):
                 print(f" {i + 1}: {connection.name}")
-            print("\nChoose an action: \n l: List rooms \n g: Glossary \n [number]: Move to connection \n q: Quit")
-            
+            self.print_dashes()
+            print("Choose an action: \n [G]: Glossary \n [#]: Move to room \n [Q]: Quit")
+            self.print_dashes()
             action = input("What do you want to do? ")
             self.clear_screen()
 
-            if action == 'l':
-                self.display_rooms(self.game_loop.graph.nodes)
-            elif action == 'g':
-                EnemyGlossaryScreen(self.location).display()
+            if action.lower() == 'g':
+                GlossaryScreen(self.location, self.game_loop).display()
             elif action.isdigit() and int(action) - 1 < len(self.location.connections):
                 self.move_to_location(self.location.connections[int(action) - 1])
                 self.game_loop.current_node.visited = True
                 break
-            elif action == 'q':
+            elif action.lower() == 'q':
                 exit()
             else:
                 print("Invalid action, try again.")
@@ -308,7 +378,7 @@ class CombatScreen(GameScreen):
 
     def display(self):
         super().print_dashes()
-        print(f"You encounter an enemy! The fight begins. It's a {self.enemy.name}.".center(72, ' '))
+        print(f"You encounter an enemy! The fight begins. It's a {self.enemy.name}.".center(90, ' '))
         self.display_health_bars()
         while self.player.is_alive() and self.enemy.is_alive():
             self.display_combat_options()
