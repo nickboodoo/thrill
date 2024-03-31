@@ -21,9 +21,6 @@ class Character:
             damage //= 2
         target.health -= damage
         return damage
-    
-    def cast_spell(self, spell_name, target):
-        pass
 
 class Enemy(Character):
     enemies = []
@@ -75,35 +72,7 @@ class Player(Character):
             print("Not enough mana or health is full!")
             return 0
 
-    def cast_spell(self, spell_name, target):
-        spell_name = spell_name.lower()
-        if spell_name == "heal":
-            return self.heal()
-        elif spell_name == "smite":
-            if target.health <= target.max_health * 0.25:
-                damage = random.randint(1, self.strength) * 3
-                target.health -= damage
-                print(f"Smite deals triple damage! {damage} damage done.")
-            else:
-                print("Enemy health is too high for Smite.")
-            return 0
-        elif spell_name == "unseen predator":
-            self.is_immune = True
-            self.unseen_predator_turns = 3
-            print("You've become an Unseen Predator! You will take no damage for 3 turns but deal 50% less damage.")
-            return 0
-        elif spell_name == "mana reave":
-            damage = random.randint(1, self.strength) * 0.25
-            target.health -= damage
-            self.mana += 50
-            print(f"Mana Reave restores 50 mana. {damage} damage dealt to the enemy.")
-            return 0
-        else:
-            print("Spell not recognized.")
-            return 0
-
     def update_effects(self):
-        # Call this method each turn to update spell effects
         if self.unseen_predator_turns > 0:
             self.unseen_predator_turns -= 1
             if self.unseen_predator_turns == 0:
@@ -168,28 +137,17 @@ class GlossaryScreen(GameScreen):
         while True:
             self.clear_screen()
             print("Glossary Menu:")
-            print("1. Spells")
-            print("2. Enemies")
-            print("3. Back")
+            print("1. Enemies")
+            print("2. Back")
             choice = input("Choose a category: ")
 
             if choice == '1':
-                self.display_spells()
-            elif choice == '2':
                 self.display_enemies()
-            elif choice == '3':
+            elif choice == '2':
                 break
             else:
                 print("Invalid choice.")
             input("Press Enter to continue...")
-
-    def display_spells(self):
-        self.clear_screen()
-        print("Spells:")
-        print("Heal - Restores 50 HP, Costs 25 Mana")
-        print("Smite - Triple damage if enemy below 25% HP")
-        print("Unseen Predator - No damage for 3 turns, deal 50% less damage")
-        print("Mana Reave - Deals 75% less damage, restores 50 Mana")
 
     def display_enemies(self):
         self.clear_screen()
@@ -345,7 +303,7 @@ class CombatScreen(GameScreen):
         super().print_dashes()
 
     def display_combat_options(self):
-        print("Choose your action: \n1. Attack \n2. Magic")
+        print("Choose your action: \n1. Attack")
 
     def handle_combat_action(self):
         action = input("Action: ")
@@ -358,15 +316,12 @@ class CombatScreen(GameScreen):
                 print(f"The {self.enemy.name} is defeated.")
                 return 'enemy_defeated'
 
-            # Check if player is immune due to Unseen Predator spell
             if not self.player.is_immune:
                 damage_taken = self.enemy.attack(self.player)
                 print(f"The {self.enemy.name} attacks you for {damage_taken} damage.")
             else:
                 print("The Unseen Predator effect protects you. You take no damage this turn.")
 
-        elif action == "2":
-            MagicMenuScreen(self.location, self.player).display()
         else:
             print("Invalid action, try again.")
 
@@ -385,43 +340,6 @@ class CombatScreen(GameScreen):
             if not self.player.is_alive():
                 print("Game Over. You have been defeated.")
                 break
-
-class MagicMenuScreen(GameScreen):
-    def __init__(self, location, player):
-        super().__init__(location)
-        self.player = player
-
-    def display(self):
-        while True:
-            self.clear_screen()
-            print("Magic Menu:")
-            print("1. Heal - 25 Mana (Heal 50 HP)")
-            print("2. Smite - If enemy below 25% HP, deal triple damage")
-            print("3. Unseen Predator - Take no damage for 3 turns but deal 50% less damage")
-            print("4. Mana Reave - Attack enemy for 75% less damage but restore 50 Mana")
-            print("5. Back")
-            choice = input("Choose a spell: ")
-
-            if choice == '1':
-                healed_amount = self.player.cast_spell("heal", None)  # No target needed for heal
-                print(f"Healed for {healed_amount} HP. Current health: {self.player.health}.")
-            elif choice in ['2', '3', '4']:
-                if not self.location.enemy or not self.location.enemy.is_alive():
-                    print("There is no enemy here.")
-                else:
-                    if choice == '2':
-                        self.player.cast_spell("smite", self.location.enemy)
-                    elif choice == '3':
-                        self.player.cast_spell("unseen predator", None)  # No target needed for unseen predator
-                    elif choice == '4':
-                        self.player.cast_spell("mana reave", self.location.enemy)
-            elif choice == '5':
-                break
-            else:
-                print("Invalid choice.")
-            
-            input("Press Enter to continue...")
-            break
 
 class StateEngine:
     def __init__(self, size=3):
