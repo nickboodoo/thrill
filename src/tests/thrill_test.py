@@ -30,7 +30,7 @@ class Character:
             self.inventory.remove(item)
 
     def use_item(self, item, target=None):
-        if item in self.inventory and isinstance(item, Consumable):
+        if item in self.inventory and isinstance(item):
             item.use(target or self)
             item.quantity -= 1
             if item.quantity <= 0:
