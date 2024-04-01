@@ -22,6 +22,20 @@ class Character:
         target.health -= damage
         return damage
 
+    def add_item(self, item):
+        self.inventory.append(item)
+
+    def remove_item(self, item):
+        if item in self.inventory:
+            self.inventory.remove(item)
+
+    def use_item(self, item, target=None):
+        if item in self.inventory and isinstance(item, Consumable):
+            item.use(target or self)
+            item.quantity -= 1
+            if item.quantity <= 0:
+                self.remove_item(item)
+
 class Enemy(Character):
     enemies = []
 
@@ -59,7 +73,35 @@ class Player(Character):
     def __init__(self, name='Player', health=100, attack=25, mana=100):
         super().__init__(name, health, attack, mana)
         self.max_health = 100
-        self.unseen_predator_turns = 0
+        self.inventory = []
+
+class Magic:
+    items = []  # Combined list for spells and enchantments
+
+    @classmethod
+    def load_magic_from_csv(cls, filepath):
+        with open(filepath, newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            cls.items = []  # Reset items
+            for row in reader:
+                # Assuming 'Type' can be 'Spell' or 'Enchantment' or a new unified type
+                cls.items.append({
+                    "type": row["Type"],
+                    "name": row["Name"],
+                    "effect": row["Effect"],
+                    "cost": row["Cost"],
+                    "lore": row.get("Lore", "No lore available.")
+                })
+
+    @staticmethod
+    def format_magic_info(magic):
+        name_and_effect = f'{magic["name"]} - {magic["effect"]} ({magic["cost"]})\n'
+        lore = f'"{magic["lore"]}"'
+        wrapped_lore_lines = textwrap.wrap(lore, width=50)  # Assuming a fixed width for simplicity
+        centered_lore_lines = [line.center(50) for line in wrapped_lore_lines]
+        centered_lore = "\n".join(centered_lore_lines)
+        info = f"{name_and_effect}\n{centered_lore}"
+        return info
 
 class Location:
     def __init__(self, name, generate_enemy_flag=True):
@@ -121,7 +163,8 @@ class GlossaryScreen(GameScreen):
             print("1. About the Game")
             print("2. Rooms")
             print("3. Enemies")
-            print("4. Back")
+            print("4. Spells and Enchantments")  # New option for Spells and Enchantments
+            print("5. Back")
             self.print_dashes()
             choice = input("Choose a category: ")
 
@@ -132,7 +175,9 @@ class GlossaryScreen(GameScreen):
             elif choice == '3':
                 EnemyGlossaryScreen(self.location, self.game_loop).display()
             elif choice == '4':
-                break
+                MagicGlossaryScreen(self.location, self.game_loop).display()  # Display the MagicGlossaryScreen
+            elif choice == '5':
+                break  # Exit the loop to go back
             else:
                 print("Invalid choice.")
             input("Press Enter to continue...")
@@ -206,6 +251,70 @@ class EnemyGlossaryScreen(GameScreen):
             input("Press Enter to try again...")
             self.display_enemies()
 
+class MagicGlossaryScreen(GameScreen):
+    MAX_ENTRIES_PER_COLUMN = 10  # This might not be needed depending on your display needs
+
+    def display(self):
+        self.display_magic()
+
+    def display_magic(self):
+        self.clear_screen()
+        self.print_dashes()
+        print("Select a magic item to learn more:".center(90))
+        self.print_dashes()
+
+        # Ensure magic items are loaded.
+        Magic.load_magic_from_csv('src/tests/scrolls.csv')
+
+        # Separate spells and enchantments into two lists.
+        spells = [item for item in Magic.items if item['type'].lower() == 'spell']
+        enchantments = [item for item in Magic.items if item['type'].lower() == 'enchantment']
+
+        # Print the headers for each column.
+        print(f"{'Spells'.center(40)}{'Enchantments'.center(40)}")
+        self.print_dashes()
+
+        # Calculate the maximum number of rows needed.
+        max_rows = max(len(spells), len(enchantments))
+
+        for i in range(max_rows):
+            # Prepare the spell name if within the index range.
+            spell_name = f"{i + 1}. {spells[i]['name']} (Spell)" if i < len(spells) else "".ljust(40)
+            
+            # Prepare the enchantment name if within the index range, adjusting the index as needed.
+            enchantment_name = ""
+            if i < len(enchantments):
+                enchantment_index = i + len(spells) + 1
+                enchantment_name = f"{enchantment_index}. {enchantments[i]['name']} (Enchantment)"
+            
+            # Print the row with both spell and enchantment names.
+            print(f"{spell_name.ljust(40)}{enchantment_name}")
+
+        print("\n0. Back")
+        self.print_dashes()
+        choice = input("\nEnter your choice: ")
+        self.handle_choice(choice, spells + enchantments)
+
+    def handle_choice(self, choice, magic_items):
+        if choice.isdigit():
+            choice = int(choice) - 1  # Adjust for zero-based indexing
+            if choice == -1:
+                return  # Go back
+            elif 0 <= choice < len(magic_items):
+                selected_magic = magic_items[choice]
+                # Create and display a MagicDetailsGlossary for the selected magic item
+                details_screen = MagicDetailsGlossary(self.location, selected_magic, self.game_loop)
+                details_screen.display()
+                self.display_magic()  # Optionally redisplay the magic list afterwards
+            else:
+                print("Invalid choice. Please try again.")
+                input("Press Enter to continue...")
+                self.display_magic()
+        else:
+            print("Please enter a number.")
+            input("Press Enter to continue...")
+            self.display_magic()
+
 class RoomGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
         super().__init__(location, game_loop)
@@ -243,6 +352,31 @@ class RoomGlossaryScreen(GameScreen):
         detail_screen = RoomDetailScreen(self.location, self.game_loop, node)
         detail_screen.display()
 
+class InventoryScreen(GameScreen):
+    def __init__(self, location, player, game_loop):
+        super().__init__(location, game_loop)
+        self.player = player
+
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+        print("Inventory".center(self.DASH_WIDTH))
+        self.print_dashes()
+        for index, item in enumerate(self.player.inventory, start=1):
+            print(f"{index}. {item.name} - {item.description} (x{item.quantity})")
+        self.print_dashes()
+        print("Select an item to use or 0 to exit:")
+        choice = input()
+        if choice.isdigit():
+            choice = int(choice)
+            if 0 < choice <= len(self.player.inventory):
+                item = self.player.inventory[choice - 1]
+                self.player.use_item(item)
+            elif choice == 0:
+                return  # Exit inventory
+        else:
+            print("Invalid selection.")
+
 class EnemyDetailScreen(GameScreen):
     def __init__(self, location, enemy):
         super().__init__(location)
@@ -256,6 +390,32 @@ class EnemyDetailScreen(GameScreen):
         self.print_dashes()
         print(enemy_info)
         self.print_dashes()
+
+class MagicDetailsGlossary(GameScreen):
+    def __init__(self, location, magic_item, game_loop=None):
+        super().__init__(location, game_loop)
+        self.magic_item = magic_item
+
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+
+        # Header with the magic item's name, effect, and cost
+        header = f"{self.magic_item['name']} - {self.magic_item['effect']} ({self.magic_item['cost']})"
+        print(header.center(self.DASH_WIDTH))
+
+        self.print_dashes()
+
+        # Display the lore with word wrapping for better readability
+        wrapped_lore_lines = textwrap.wrap(self.magic_item['lore'], width=self.LORE_TEXT_WIDTH)
+        for line in wrapped_lore_lines:
+            # Center each line of the lore text
+            print(line.center(self.DASH_WIDTH))
+
+        self.print_dashes()
+        input("\nPress Enter to go back...")
+
+        # You might want to return to the previous screen or perform some action after this
 
 class RoomDetailScreen(GameScreen):
     def __init__(self, location, game_loop, room):
@@ -373,7 +533,7 @@ class CombatScreen(GameScreen):
         super().print_dashes()
 
     def display_combat_options(self):
-        print("Choose your action: \n1. Attack")
+        print("Choose your action: \n1. Attack \n2. Inventory")
 
     def handle_combat_action(self):
         action = input("Action: ")
@@ -391,6 +551,10 @@ class CombatScreen(GameScreen):
             if not self.player.is_alive():
                 print("You have been defeated.")
                 return 'player_defeated'
+
+        elif action == "2":
+            inventory_screen = InventoryScreen(self.location, self.player, self.game_loop)
+            inventory_screen.display()
 
         else:
             print("Invalid action, try again.")
