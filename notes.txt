@@ -1,14 +1,11 @@
 add ascii art
 
 implement:
-1. an inventory system
-    where do i want it to be accessed from
-    want do i want it to show
-    make an inventory screen
-2. scroll items
+
+1. scroll items
     lore screen for scrolls
-3. functionality for each scroll
-4. scroll items as loot from combatvictory
+2. functionality for each scroll
+3. scroll items as loot from combatvictory
 
 
 store feature

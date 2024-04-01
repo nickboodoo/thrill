@@ -74,6 +74,11 @@ class Player(Character):
         super().__init__(name, health, attack, mana)
         self.max_health = 100
         self.inventory = []
+        self.gold = 100  # New attribute to track gold
+
+    def add_gold(self, amount):
+        self.gold += amount
+        print(f"You found {amount} gold!")
 
 class Magic:
     items = []  # Combined list for spells and enchantments
@@ -362,8 +367,14 @@ class InventoryScreen(GameScreen):
         self.print_dashes()
         print("Inventory".center(self.DASH_WIDTH))
         self.print_dashes()
-        for index, item in enumerate(self.player.inventory, start=1):
-            print(f"{index}. {item.name} - {item.description} (x{item.quantity})")
+        # Display the player's gold
+        print(f"Gold: {self.player.gold}")
+        self.print_dashes()
+        if self.player.inventory:  # Check if the inventory has items
+            for index, item in enumerate(self.player.inventory, start=1):
+                print(f"{index}. {item.name} - {item.description} (x{item.quantity})")
+        else:
+            print("Your inventory is empty.")
         self.print_dashes()
         print("Select an item to use or 0 to exit:")
         choice = input()
@@ -483,13 +494,16 @@ class ExplorationScreen(GameScreen):
             for i, connection in enumerate(self.location.connections):
                 print(f" {i + 1}: {connection.name}")
             self.print_dashes()
-            print("Choose an action: \n [G]: Glossary \n [#]: Move to room \n [Q]: Quit")
+            # Add Inventory option here
+            print("Choose an action: \n [G]: Glossary \n [I]: Inventory \n [#]: Move to room \n [Q]: Quit")
             self.print_dashes()
             action = input("What do you want to do? ")
             self.clear_screen()
 
             if action.lower() == 'g':
                 GlossaryScreen(self.location, self.game_loop).display()
+            elif action.lower() == 'i':  # Handle inventory option
+                InventoryScreen(self.location, self.game_loop.player, self.game_loop).display()  # Open InventoryScreen
             elif action.isdigit() and int(action) - 1 < len(self.location.connections):
                 self.move_to_location(self.location.connections[int(action) - 1])
                 self.game_loop.current_node.visited = True
@@ -587,6 +601,10 @@ class CombatVictoryScreen(GameScreen):
     def display(self):
         victory_message = f"You have defeated the enemy in {self.location.name}! " \
                           "You take a moment to catch your breath and prepare for the next challenge."
+
+        # Reward the player with random gold between 1 to 100
+        gold_reward = random.randint(1, 100)
+        self.player.add_gold(gold_reward)  # Use the new method to add gold to the player
         
         self.clear_screen()
         self.print_dashes()
@@ -598,6 +616,7 @@ class CombatVictoryScreen(GameScreen):
             print(line.center(self.DASH_WIDTH))
 
         self.print_dashes()
+        print(f"Gold: {self.player.gold}")  # Display current gold total
         print("Choose your next action:")
         print("1. Continue Exploring")
         print("2. View Character Status")
