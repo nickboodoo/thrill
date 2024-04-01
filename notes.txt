@@ -1,9 +1,10 @@
 add ascii art
 
+consume souls to heal, regain mana, or buff damage or buff defense
+
 implement:
 
 1. scroll items
-    lore screen for scrolls
 2. functionality for each scroll
 3. scroll items as loot from combatvictory
 
