@@ -3,6 +3,11 @@ import os
 import csv
 import textwrap
 
+#==========================================#
+#              LOGIC CLASSES               #
+#              -------------               #
+#==========================================#
+
 class Character:
     def __init__(self, name, health, attack, mana=0):
         self.name = name
@@ -94,17 +99,22 @@ class Magic:
                     "name": row["Name"],
                     "effect": row["Effect"],
                     "cost": row["Cost"],
-                    "lore": row.get("Lore", "No lore available.")
+                    "lore": row.get("Lore", "No lore available."),
+                    "lore2": row.get("Lore2", "Ancient secrets remain untold.")
                 })
 
     @staticmethod
     def format_magic_info(magic):
         name_and_effect = f'{magic["name"]} - {magic["effect"]} ({magic["cost"]})\n'
-        lore = f'"{magic["lore"]}"'
+        lore = f'"{magic["lore"]}"\n'
+        lore2 = f'"{magic["lore2"]}"\n'
         wrapped_lore_lines = textwrap.wrap(lore, width=50)
+        wrapped_lore2_lines = textwrap.wrap(lore2, width=50)
         centered_lore_lines = [line.center(50) for line in wrapped_lore_lines]
+        centered_lore2_lines = [line.center(50) for line in wrapped_lore2_lines]
         centered_lore = "\n".join(centered_lore_lines)
-        info = f"{name_and_effect}\n{centered_lore}"
+        centered_lore2 = "\n".join(centered_lore2_lines)
+        info = f"{name_and_effect}\n{centered_lore}\n{centered_lore2}"
         return info
 
 class Location:
@@ -152,6 +162,11 @@ class Map:
         if not any(node.enemy for node in self.nodes):
             random.choice(self.nodes[1:]).enemy = Enemy.generate_random_enemy()
 
+#==========================================#
+#             USER INTERFACES              #
+#             ---------------              #            
+#==========================================#
+
 class GameScreen:
     DASH_WIDTH = 90
     LORE_TEXT_WIDTH = 65
@@ -169,6 +184,10 @@ class GameScreen:
     def display(self):
         pass
 
+#==========================================#
+#               GAMELOOP UI                #
+#==========================================#
+
 class GlossaryScreen(GameScreen):
     def display(self):
         while True:
@@ -185,7 +204,7 @@ class GlossaryScreen(GameScreen):
             choice = input("Choose a category: ")
 
             if choice == '1':
-                AboutGameScreen(self.location, self.game_loop).display()
+                AboutGameGlossaryScreen(self.location, self.game_loop).display()
             elif choice == '2':
                 LocationGlossaryScreen(self.location, self.game_loop).display()
             elif choice == '3':
@@ -198,7 +217,81 @@ class GlossaryScreen(GameScreen):
                 print("Invalid choice.")
             input("Press Enter to continue...")
 
-class AboutGameScreen(GameScreen):
+class InventoryScreen(GameScreen):
+    def __init__(self, location, player, game_loop):
+        super().__init__(location, game_loop)
+        self.player = player
+
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+        print("Inventory".center(self.DASH_WIDTH))
+        self.print_dashes()
+        print(f"Souls: {self.player.souls}")
+        self.print_dashes()
+        if self.player.inventory:
+            for index, item in enumerate(self.player.inventory, start=1):
+                print(f"{index}. {item.name} - {item.description} (x{item.quantity})")
+        else:
+            print("Your inventory is empty.")
+        self.print_dashes()
+        print("Select an item to use or 0 to exit:")
+        choice = input()
+        if choice.isdigit():
+            choice = int(choice)
+            if 0 < choice <= len(self.player.inventory):
+                item = self.player.inventory[choice - 1]
+                self.player.use_item(item)
+            elif choice == 0:
+                return
+        else:
+            print("Invalid selection.")
+
+class ExplorationScreen(GameScreen):
+    def __init__(self, location, game_loop):
+        super().__init__(location)
+        self.game_loop = game_loop
+
+    def move_to_location(self, new_location):
+        self.game_loop.previous_node = self.game_loop.current_node
+        self.game_loop.current_node = new_location
+
+    def display(self):
+        while True:
+            self.clear_screen()
+            self.print_dashes()
+            print(f"You are in {self.location.name}.".center(self.DASH_WIDTH))
+            self.print_dashes()
+            if self.location.enemy and self.location.enemy.is_alive():
+                print(f"An enemy {self.location.enemy.name} is here!")
+            print("Connections:")
+            for i, connection in enumerate(self.location.connections):
+                print(f" {i + 1}: {connection.name}")
+            self.print_dashes()
+            print("Choose an action: \n [G]: Glossary \n [I]: Inventory \n [#]: Move to room \n [Q]: Quit")
+            self.print_dashes()
+            action = input("What do you want to do? ")
+            self.clear_screen()
+
+            if action.lower() == 'g':
+                GlossaryScreen(self.location, self.game_loop).display()
+            elif action.lower() == 'i':
+                InventoryScreen(self.location, self.game_loop.player, self.game_loop).display()
+            elif action.isdigit() and int(action) - 1 < len(self.location.connections):
+                self.move_to_location(self.location.connections[int(action) - 1])
+                break
+            elif action.lower() == 'q':
+                exit()
+            else:
+                print("Invalid action, try again.")
+                input("Press Enter to continue...")
+                self.clear_screen()
+
+#==========================================#
+#         GLOSSARY SUBDIRECTORY UI         #
+#==========================================#
+
+class AboutGameGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
         super().__init__(location, game_loop)
 
@@ -287,59 +380,38 @@ class MagicGlossaryScreen(GameScreen):
 
         Magic.load_magic_from_csv('src/tests/scrolls.csv')
 
-        # Categorize magic items into abilities, spells, and enchantments
         abilities = [item for item in Magic.items if item['type'].lower() == 'ability']
         spells = [item for item in Magic.items if item['type'].lower() == 'spell']
         enchantments = [item for item in Magic.items if item['type'].lower() == 'enchantment']
-        combined_items = abilities + spells + enchantments  # All magic items combined
 
-        # Calculate the maximum number of rows needed
+        magic_items = abilities + spells + enchantments
+        indexed_magic_items = {i + 1: item for i, item in enumerate(magic_items)}
+
         max_rows = max(len(abilities), len(spells), len(enchantments))
 
-        # Print headers for each column
         print(f"{'Abilities'.center(30)}{'Spells'.center(30)}{'Enchantments'.center(30)}")
         self.print_dashes()
 
-        # Index to keep track of the magic item number
-        index = 1
-
-        # Display each category of magic items in its own column
         for i in range(max_rows):
-            items_row = []
-            if i < len(abilities):
-                items_row.append(f"{index}. {abilities[i]['name']}")
-                index += 1
-            else:
-                items_row.append("")
-
-            if i < len(spells):
-                items_row.append(f"{index}. {spells[i]['name']}")
-                index += 1
-            else:
-                items_row.append("")
-
-            if i < len(enchantments):
-                items_row.append(f"{index}. {enchantments[i]['name']}")
-                index += 1
-            else:
-                items_row.append("")
-
-            # Adjust the formatting if needed to make the columns aligned
-            print(f"{items_row[0].ljust(30)}{items_row[1].ljust(30)}{items_row[2].ljust(30)}")
+            ability = f"{i + 1}. {abilities[i]['name']}" if i < len(abilities) else ''
+            spell = f"{i + len(abilities) + 1}. {spells[i]['name']}" if i < len(spells) else ''
+            enchantment = f"{i + len(abilities) + len(spells) + 1}. {enchantments[i]['name']}" if i < len(enchantments) else ''
+            
+            print(f"{ability.ljust(30)}{spell.ljust(30)}{enchantment.ljust(30)}")
 
         print("\n0. Back")
         self.print_dashes()
         choice = input("\nEnter your choice: ")
 
-        self.handle_choice(choice, combined_items)
+        self.handle_choice(choice, indexed_magic_items)
 
-    def handle_choice(self, choice, combined_items):
+    def handle_choice(self, choice, indexed_magic_items):
         if choice.isdigit():
-            choice = int(choice) - 1
-            if choice == -1:
+            choice = int(choice)
+            if choice == 0:
                 return
-            elif 0 <= choice < len(combined_items):
-                selected_magic = combined_items[choice]
+            elif choice in indexed_magic_items:
+                selected_magic = indexed_magic_items[choice]
                 details_screen = MagicDetailsGlossary(self.location, selected_magic, self.game_loop)
                 details_screen.display()
                 self.display_magic()
@@ -351,8 +423,6 @@ class MagicGlossaryScreen(GameScreen):
             print("Please enter a number.")
             input("Press Enter to continue...")
             self.display_magic()
-
-
 
 class LocationGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
@@ -388,35 +458,9 @@ class LocationGlossaryScreen(GameScreen):
         detail_screen = LocationDetailScreen(self.location, self.game_loop, node)
         detail_screen.display()
 
-class InventoryScreen(GameScreen):
-    def __init__(self, location, player, game_loop):
-        super().__init__(location, game_loop)
-        self.player = player
-
-    def display(self):
-        self.clear_screen()
-        self.print_dashes()
-        print("Inventory".center(self.DASH_WIDTH))
-        self.print_dashes()
-        print(f"Souls: {self.player.souls}")
-        self.print_dashes()
-        if self.player.inventory:
-            for index, item in enumerate(self.player.inventory, start=1):
-                print(f"{index}. {item.name} - {item.description} (x{item.quantity})")
-        else:
-            print("Your inventory is empty.")
-        self.print_dashes()
-        print("Select an item to use or 0 to exit:")
-        choice = input()
-        if choice.isdigit():
-            choice = int(choice)
-            if 0 < choice <= len(self.player.inventory):
-                item = self.player.inventory[choice - 1]
-                self.player.use_item(item)
-            elif choice == 0:
-                return
-        else:
-            print("Invalid selection.")
+#==========================================#
+#     GLOSSARY DETAILS SUBDIRECTORY UI     #
+#==========================================#
 
 class EnemyDetailScreen(GameScreen):
     def __init__(self, location, enemy):
@@ -436,18 +480,25 @@ class MagicDetailsGlossary(GameScreen):
     def __init__(self, location, magic_item, game_loop=None):
         super().__init__(location, game_loop)
         self.magic_item = magic_item
+        self.WRAP_WIDTH = 75
 
     def display(self):
         self.clear_screen()
         self.print_dashes()
 
-        header = f"{self.magic_item['name']} - {self.magic_item['effect']} ({self.magic_item['cost']})"
-        print(header.center(self.DASH_WIDTH))
+        wrapped_header = textwrap.wrap(f"{self.magic_item['name']} - {self.magic_item['effect']} ({self.magic_item['cost']})", 
+                                       width=self.WRAP_WIDTH)
+        for line in wrapped_header:
+            print(line.center(self.DASH_WIDTH))
 
         self.print_dashes()
 
-        wrapped_lore_lines = textwrap.wrap(self.magic_item['lore'], width=self.LORE_TEXT_WIDTH)
+        wrapped_lore_lines = textwrap.wrap(self.magic_item['lore'], width=self.WRAP_WIDTH)
+        wrapped_lore2_lines = textwrap.wrap(self.magic_item['lore2'], width=self.WRAP_WIDTH)
         for line in wrapped_lore_lines:
+            print(line.center(self.DASH_WIDTH))
+        print('')
+        for line in wrapped_lore2_lines:
             print(line.center(self.DASH_WIDTH))
 
         self.print_dashes()
@@ -468,72 +519,9 @@ class LocationDetailScreen(GameScreen):
             print(f" {i + 1}. {connected_node.name}")
         self.print_dashes()
 
-class VictoryScreen(GameScreen):
-    def display(self):
-        self.clear_screen()
-        print("Congratulations! You have defeated all the enemies and survived.")
-        print("You are a true hero!")
-        print("\nWould you like to play again? (yes/no)")
-        choice = input().lower()
-        if choice == 'yes':
-            game = StateEngine()
-            game.play()
-        else:
-            print("Thank you for playing! Goodbye.")
-            exit()
-
-class DefeatScreen(GameScreen):
-    def display(self):
-        self.clear_screen()
-        print("Alas, you have been defeated. The world mourns the loss of a brave hero.")
-        print("\nWould you like to try again? (yes/no)")
-        choice = input().lower()
-        if choice == 'yes':
-            game = StateEngine()
-            game.play()
-        else:
-            print("Thank you for playing! Better luck next time.")
-            exit()
-
-class ExplorationScreen(GameScreen):
-    def __init__(self, location, game_loop):
-        super().__init__(location)
-        self.game_loop = game_loop
-
-    def move_to_location(self, new_location):
-        self.game_loop.previous_node = self.game_loop.current_node
-        self.game_loop.current_node = new_location
-
-    def display(self):
-        while True:
-            self.clear_screen()
-            self.print_dashes()
-            print(f"You are in {self.location.name}.".center(self.DASH_WIDTH))
-            self.print_dashes()
-            if self.location.enemy and self.location.enemy.is_alive():
-                print(f"An enemy {self.location.enemy.name} is here!")
-            print("Connections:")
-            for i, connection in enumerate(self.location.connections):
-                print(f" {i + 1}: {connection.name}")
-            self.print_dashes()
-            print("Choose an action: \n [G]: Glossary \n [I]: Inventory \n [#]: Move to room \n [Q]: Quit")
-            self.print_dashes()
-            action = input("What do you want to do? ")
-            self.clear_screen()
-
-            if action.lower() == 'g':
-                GlossaryScreen(self.location, self.game_loop).display()
-            elif action.lower() == 'i':
-                InventoryScreen(self.location, self.game_loop.player, self.game_loop).display()
-            elif action.isdigit() and int(action) - 1 < len(self.location.connections):
-                self.move_to_location(self.location.connections[int(action) - 1])
-                break
-            elif action.lower() == 'q':
-                exit()
-            else:
-                print("Invalid action, try again.")
-                input("Press Enter to continue...")
-                self.clear_screen()
+#==========================================#
+#       EXPLORATION SUBDIRECTORY UI        #
+#==========================================#
 
 class CombatScreen(GameScreen):
     def __init__(self, location, player, enemy, game_loop):
@@ -562,7 +550,7 @@ class CombatScreen(GameScreen):
         print("Choose your action:")
         print("1. Attack")
         print("2. Consume Souls")
-        print("3. Transpose Mana")
+        print("3. Forsake Your Humanity")
 
     def handle_combat_action(self):
         action = input("Action: ")
@@ -618,6 +606,10 @@ class CombatScreen(GameScreen):
         if not self.player.is_alive():
             DefeatScreen(self.location, self.game_loop).display()
 
+#==========================================#
+#          COMBAT SUBDIRECTORY UI          #
+#==========================================#
+
 class CombatSoulsScreen(GameScreen):
     def __init__(self, location, player, game_loop):
         super().__init__(location, game_loop)
@@ -659,35 +651,6 @@ class CombatSoulsScreen(GameScreen):
             print("Invalid choice.")
         
         print(f"Remaining souls: {self.player.souls}")
-        input("Press Enter to continue...")
-        self.clear_screen()
-
-class TransposeManaScreen(GameScreen):
-    def __init__(self, location, player, game_loop):
-        super().__init__(location, game_loop)
-        self.player = player
-
-    def display(self):
-        print(f"Current Mana: {self.player.mana}")
-        print("How much mana do you want to transpose into souls? (0 to cancel)")
-        
-        while True:
-            try:
-                mana_to_transpose = input("Enter amount: ")
-                # Check for cancellation first
-                if mana_to_transpose.strip() == "0" or mana_to_transpose.strip() == "":
-                    print("Transpose cancelled.")
-                    break
-                mana_to_transpose = int(mana_to_transpose)
-                if 0 < mana_to_transpose <= self.player.mana:
-                    self.player.mana -= mana_to_transpose
-                    self.player.add_souls(mana_to_transpose)
-                    print(f"Transposed {mana_to_transpose} mana into souls.")
-                    break
-                else:
-                    print("Invalid amount. Please enter a number between 1 and your current mana, or 0 to cancel.")
-            except ValueError:
-                print("Please enter a valid number.")
         input("Press Enter to continue...")
         self.clear_screen()
 
@@ -745,6 +708,69 @@ class CombatVictoryScreen(GameScreen):
         input("Press Enter to return to victory screen...")
         self.display()
 
+class TransposeManaScreen(GameScreen):
+    def __init__(self, location, player, game_loop):
+        super().__init__(location, game_loop)
+        self.player = player
+
+    def display(self):
+        print(f"Current Mana: {self.player.mana}")
+        print("How much mana do you want to transpose into souls? (0 to cancel)")
+        
+        while True:
+            try:
+                mana_to_transpose = input("Enter amount: ")
+                if mana_to_transpose.strip() == "0" or mana_to_transpose.strip() == "":
+                    print("Transpose cancelled.")
+                    break
+                mana_to_transpose = int(mana_to_transpose)
+                if 0 < mana_to_transpose <= self.player.mana:
+                    self.player.mana -= mana_to_transpose
+                    self.player.add_souls(mana_to_transpose)
+                    print(f"Transposed {mana_to_transpose} mana into souls.")
+                    break
+                else:
+                    print("Invalid amount. Please enter a number between 1 and your current mana, or 0 to cancel.")
+            except ValueError:
+                print("Please enter a valid number.")
+        input("Press Enter to continue...")
+        self.clear_screen()
+
+#==========================================#
+#              GAME ENDING UI              #
+#==========================================#
+
+class VictoryScreen(GameScreen):
+    def display(self):
+        self.clear_screen()
+        print("Congratulations! You have defeated all the enemies and survived.")
+        print("You are a true hero!")
+        print("\nWould you like to play again? (yes/no)")
+        choice = input().lower()
+        if choice == 'yes':
+            game = StateEngine()
+            game.play()
+        else:
+            print("Thank you for playing! Goodbye.")
+            exit()
+
+class DefeatScreen(GameScreen):
+    def display(self):
+        self.clear_screen()
+        print("Alas, you have been defeated. The world mourns the loss of a brave hero.")
+        print("\nWould you like to try again? (yes/no)")
+        choice = input().lower()
+        if choice == 'yes':
+            game = StateEngine()
+            game.play()
+        else:
+            print("Thank you for playing! Better luck next time.")
+            exit()
+
+#==========================================#
+#       STATE ENGINE (UI CONTROLLER)       #
+#==========================================#
+
 class StateEngine:
     def __init__(self, size=5):
         self.graph = Map(size)
@@ -777,6 +803,10 @@ class StateEngine:
             if node.enemy and node.enemy.is_alive():
                 return False
         return True
+
+#==========================================#
+#             MODULE  CHECKING             #
+#==========================================#
 
 if __name__ == "__main__":
     game = StateEngine()
