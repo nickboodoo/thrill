@@ -72,7 +72,7 @@ class Enemy(Character):
 class Player(Character):
     def __init__(self, name='Player', health=100, attack=25, mana=100):
         super().__init__(name, health, attack, mana)
-        self.max_health = 100
+        self.max_health = health
         self.inventory = []
         self.souls = 0
 
@@ -536,7 +536,10 @@ class CombatScreen(GameScreen):
         super().print_dashes()
 
     def display_combat_options(self):
-        print("Choose your action: \n1. Attack \n2. Inventory")
+        print("Choose your action:")
+        print("1. Attack")
+        print("2. Consume Souls")
+        print("3. Transpose Mana")
 
     def handle_combat_action(self):
         action = input("Action: ")
@@ -556,8 +559,18 @@ class CombatScreen(GameScreen):
                 return 'player_defeated'
 
         elif action == "2":
-            inventory_screen = InventoryScreen(self.location, self.player, self.game_loop)
-            inventory_screen.display()
+            if self.player.souls > 0:
+                souls_screen = CombatSoulsScreen(self.location, self.player, self.game_loop)
+                souls_screen.display()
+            else:
+                print("You have no souls to consume.")
+
+        elif action == "3":
+            if self.player.mana > 0:
+                transpose_screen = TransposeManaScreen(self.location, self.player, self.game_loop)
+                transpose_screen.display()
+            else:
+                print("You have no mana to consume.")
 
         else:
             print("Invalid action, try again.")
@@ -581,6 +594,77 @@ class CombatScreen(GameScreen):
         
         if not self.player.is_alive():
             DefeatScreen(self.location, self.game_loop).display()
+
+class CombatSoulsScreen(GameScreen):
+    def __init__(self, location, player, game_loop):
+        super().__init__(location, game_loop)
+        self.player = player
+
+    def display(self):
+        if self.player.souls <= 0:
+            print("You have no souls to consume.")
+            input("Press Enter to continue...")
+            return
+
+        print(f"You have {self.player.souls} souls.")
+        print("How would you like to use your souls?")
+        print("1. Heal HP")
+        print("2. Heal Mana")
+        print("3. Buff Attack")
+        choice = input("Choose an option: ")
+
+        if choice == '1':
+            hp_deficit = self.max_health - self.health
+            hp_to_heal = min(self.player.souls, hp_deficit)
+            self.player.health += hp_to_heal
+            self.player.souls -= hp_to_heal
+            print(f"Healed {hp_to_heal} HP.")
+        elif choice == '2':
+            mana_deficit = 100 - self.player.mana
+            mana_to_heal = min(self.player.souls, mana_deficit)
+            self.player.mana += mana_to_heal
+            self.player.souls -= mana_to_heal
+            print(f"Restored {mana_to_heal} Mana.")
+        elif choice == '3':
+            if self.player.souls >= 25:
+                self.player.strength += 5
+                self.player.souls -= 25
+                print("Increased attack strength by 5.")
+            else:
+                print("Not enough souls. You need 25 souls to buff attack.")
+        else:
+            print("Invalid choice.")
+        
+        print(f"Remaining souls: {self.player.souls}")
+        input("Press Enter to continue...")
+
+class TransposeManaScreen(GameScreen):
+    def __init__(self, location, player, game_loop):
+        super().__init__(location, game_loop)
+        self.player = player
+
+    def display(self):
+        print(f"Current Mana: {self.player.mana}")
+        print("How much mana do you want to transpose into souls? (0 to cancel)")
+        
+        while True:
+            try:
+                mana_to_transpose = input("Enter amount: ")
+                # Check for cancellation first
+                if mana_to_transpose.strip() == "0" or mana_to_transpose.strip() == "":
+                    print("Transpose cancelled.")
+                    break
+                mana_to_transpose = int(mana_to_transpose)
+                if 0 < mana_to_transpose <= self.player.mana:
+                    self.player.mana -= mana_to_transpose
+                    self.player.add_souls(mana_to_transpose)
+                    print(f"Transposed {mana_to_transpose} mana into souls.")
+                    break
+                else:
+                    print("Invalid amount. Please enter a number between 1 and your current mana, or 0 to cancel.")
+            except ValueError:
+                print("Please enter a valid number.")
+        input("Press Enter to continue...")
 
 class CombatVictoryScreen(GameScreen):
     def __init__(self, location, player, game_loop):

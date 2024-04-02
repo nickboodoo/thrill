@@ -2,12 +2,12 @@ add ascii art
 
 consume souls to heal, regain mana, or buff damage or buff defense
 
-implement:
 
+future:
+implement:
 1. scroll items
 2. functionality for each scroll
 3. scroll items as loot from combatvictory
-
 
 store feature
 buy scrolls
