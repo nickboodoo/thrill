@@ -1,4 +1,5 @@
 Type,Name,Effect,Cost,Lore
+Ability,Forsake Your Humanity,Converts Mana to Souls,1:1 Mana:Souls,"A dark spell that harnesses the twisted arcane to convert mana into soul essences, trading ethereal energy for the most elusive of powers at the cost of one's own humanity."
 Spell,Heal,Heals 10hp,15 Mana,"A basic spell taught to novice healers. It mends minor wounds by knitting flesh and bone with a gentle warmth."
 Spell,Great Heal,Heals 30,40 Mana,"A more potent version of the heal spell, used on the battlefields to save knights and warriors from the brink of death."
 Spell,Full Heal,Heals 100 hp,75 Mana,"The pinnacle of healing magic, this spell can bring back a warrior standing at death's door, fully restoring their vitality."
@@ -9,3 +10,4 @@ Enchantment,Stun,Stuns enemy for 3 turns,65 Mana,"An enchantment that disrupts t
 Enchantment,Fear,Causes the enemy to hurt itself for 50% of its normal damage,45 Mana,"A dark enchantment that preys on the fears of its target, causing them to turn against themselves in terror."
 Enchantment,Confuse,30% chance for the enemy to heal the player for 45 hp; 30% chance the enemy to deal triple its damage to the user; 40% chance for the enemy to hurt itself for triple its damage,25 mana,"A chaotic spell that scrambles the thoughts of its target, making friend seem like foe and reality a mere suggestion."
 Enchantment,Unseen Predator,Causes the player to go immune for 3 turns,60 Mana,"An ancient hunter's enchantment, granting the caster the ability to blend with their surroundings and become invisible to their prey."
+

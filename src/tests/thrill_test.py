@@ -111,7 +111,6 @@ class Location:
     def __init__(self, name, generate_enemy_flag=True):
         self.name = name
         self.connections = []
-        self.visited = False
         self.enemy = self.generate_enemy() if generate_enemy_flag else None
 
     def connect(self, node):
@@ -125,10 +124,23 @@ class Location:
         return None
 
 class Map:
-    def __init__(self, size):
-        self.nodes = [Location("Room 0", generate_enemy_flag=False)] + [Location(f"Room {i}") for i in range(1, size)]
+    def __init__(self, size, locations_csv_path='src/tests/locations.csv'):
+        self.nodes = [Location("Soulink Shrine", generate_enemy_flag=False)]
+        location_names = self.load_location_names(locations_csv_path)
+        random.shuffle(location_names)
+        extended_location_names = (location_names * ((size // len(location_names)) + 1))[:size-1]
+        self.nodes += [Location(name, generate_enemy_flag=True) for name in extended_location_names]
+        
         self.generate_graph()
         self.ensure_at_least_one_enemy()
+
+    def load_location_names(self, csv_path):
+        names = []
+        with open(csv_path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                names.append(row['Location'])
+        return names
 
     def generate_graph(self):
         for i in range(len(self.nodes) - 1):
@@ -175,7 +187,7 @@ class GlossaryScreen(GameScreen):
             if choice == '1':
                 AboutGameScreen(self.location, self.game_loop).display()
             elif choice == '2':
-                RoomGlossaryScreen(self.location, self.game_loop).display()
+                LocationGlossaryScreen(self.location, self.game_loop).display()
             elif choice == '3':
                 EnemyGlossaryScreen(self.location, self.game_loop).display()
             elif choice == '4':
@@ -270,41 +282,64 @@ class MagicGlossaryScreen(GameScreen):
     def display_magic(self):
         self.clear_screen()
         self.print_dashes()
-        print("Select a magic item to learn more:".center(90))
+        print("Select a magic item to learn more:".center(self.DASH_WIDTH))
         self.print_dashes()
 
         Magic.load_magic_from_csv('src/tests/scrolls.csv')
 
+        # Categorize magic items into abilities, spells, and enchantments
+        abilities = [item for item in Magic.items if item['type'].lower() == 'ability']
         spells = [item for item in Magic.items if item['type'].lower() == 'spell']
         enchantments = [item for item in Magic.items if item['type'].lower() == 'enchantment']
+        combined_items = abilities + spells + enchantments  # All magic items combined
 
-        print(f"{'Spells'.center(40)}{'Enchantments'.center(40)}")
+        # Calculate the maximum number of rows needed
+        max_rows = max(len(abilities), len(spells), len(enchantments))
+
+        # Print headers for each column
+        print(f"{'Abilities'.center(30)}{'Spells'.center(30)}{'Enchantments'.center(30)}")
         self.print_dashes()
 
-        max_rows = max(len(spells), len(enchantments))
+        # Index to keep track of the magic item number
+        index = 1
 
+        # Display each category of magic items in its own column
         for i in range(max_rows):
-            spell_name = f"{i + 1}. {spells[i]['name']} (Spell)" if i < len(spells) else "".ljust(40)
-            
-            enchantment_name = ""
+            items_row = []
+            if i < len(abilities):
+                items_row.append(f"{index}. {abilities[i]['name']}")
+                index += 1
+            else:
+                items_row.append("")
+
+            if i < len(spells):
+                items_row.append(f"{index}. {spells[i]['name']}")
+                index += 1
+            else:
+                items_row.append("")
+
             if i < len(enchantments):
-                enchantment_index = i + len(spells) + 1
-                enchantment_name = f"{enchantment_index}. {enchantments[i]['name']} (Enchantment)"
-            
-            print(f"{spell_name.ljust(40)}{enchantment_name}")
+                items_row.append(f"{index}. {enchantments[i]['name']}")
+                index += 1
+            else:
+                items_row.append("")
+
+            # Adjust the formatting if needed to make the columns aligned
+            print(f"{items_row[0].ljust(30)}{items_row[1].ljust(30)}{items_row[2].ljust(30)}")
 
         print("\n0. Back")
         self.print_dashes()
         choice = input("\nEnter your choice: ")
-        self.handle_choice(choice, spells + enchantments)
 
-    def handle_choice(self, choice, magic_items):
+        self.handle_choice(choice, combined_items)
+
+    def handle_choice(self, choice, combined_items):
         if choice.isdigit():
             choice = int(choice) - 1
             if choice == -1:
                 return
-            elif 0 <= choice < len(magic_items):
-                selected_magic = magic_items[choice]
+            elif 0 <= choice < len(combined_items):
+                selected_magic = combined_items[choice]
                 details_screen = MagicDetailsGlossary(self.location, selected_magic, self.game_loop)
                 details_screen.display()
                 self.display_magic()
@@ -317,7 +352,9 @@ class MagicGlossaryScreen(GameScreen):
             input("Press Enter to continue...")
             self.display_magic()
 
-class RoomGlossaryScreen(GameScreen):
+
+
+class LocationGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
         super().__init__(location, game_loop)
 
@@ -327,9 +364,7 @@ class RoomGlossaryScreen(GameScreen):
         print("Rooms List:".center(90))
         self.print_dashes()
         for i, node in enumerate(self.game_loop.graph.nodes):
-            visited_status = "Visited" if node.visited else "Not Visited"
-            print(f"{i + 1}. {node.name}: {visited_status}")
-        
+            print(f"{i + 1}. {node.name}")
         print("\n0. Back")
         self.print_dashes()
         choice = input("\nEnter your choice to see connections or 0 to go back: ")
@@ -350,7 +385,7 @@ class RoomGlossaryScreen(GameScreen):
             self.display()
 
     def display_connections(self, node):
-        detail_screen = RoomDetailScreen(self.location, self.game_loop, node)
+        detail_screen = LocationDetailScreen(self.location, self.game_loop, node)
         detail_screen.display()
 
 class InventoryScreen(GameScreen):
@@ -418,20 +453,18 @@ class MagicDetailsGlossary(GameScreen):
         self.print_dashes()
         input("\nPress Enter to go back...")
 
-class RoomDetailScreen(GameScreen):
+class LocationDetailScreen(GameScreen):
     def __init__(self, location, game_loop, room):
         super().__init__(location, game_loop)
-        self.room = room
+        self.location = room
 
     def display(self):
         self.clear_screen()
         self.print_dashes()
-        print(f"Room Details: {self.room.name}".center(self.DASH_WIDTH))
+        print(f"Room Details: {self.location.name}".center(self.DASH_WIDTH))
         self.print_dashes()
-        visited_status = "Visited" if self.room.visited else "Not Visited"
-        print(f"Visited Status: {visited_status}")
         print("Connections:")
-        for i, connected_node in enumerate(self.room.connections):
+        for i, connected_node in enumerate(self.location.connections):
             print(f" {i + 1}. {connected_node.name}")
         self.print_dashes()
 
@@ -468,8 +501,7 @@ class ExplorationScreen(GameScreen):
         self.game_loop = game_loop
 
     def move_to_location(self, new_location):
-        if self.game_loop.current_node is not None:
-            self.game_loop.previous_node = self.game_loop.current_node
+        self.game_loop.previous_node = self.game_loop.current_node
         self.game_loop.current_node = new_location
 
     def display(self):
@@ -495,7 +527,6 @@ class ExplorationScreen(GameScreen):
                 InventoryScreen(self.location, self.game_loop.player, self.game_loop).display()
             elif action.isdigit() and int(action) - 1 < len(self.location.connections):
                 self.move_to_location(self.location.connections[int(action) - 1])
-                self.game_loop.current_node.visited = True
                 break
             elif action.lower() == 'q':
                 exit()
@@ -503,14 +534,6 @@ class ExplorationScreen(GameScreen):
                 print("Invalid action, try again.")
                 input("Press Enter to continue...")
                 self.clear_screen()
-
-    def display_rooms(self, nodes):
-        print("Rooms:")
-        for node in nodes:
-            visited_marker = "Visited" if node.visited else "Not Visited"
-            print(f"{node.name}: {visited_marker}")
-        input("Press Enter to continue...")
-        self.clear_screen()
 
 class CombatScreen(GameScreen):
     def __init__(self, location, player, enemy, game_loop):
@@ -637,6 +660,7 @@ class CombatSoulsScreen(GameScreen):
         
         print(f"Remaining souls: {self.player.souls}")
         input("Press Enter to continue...")
+        self.clear_screen()
 
 class TransposeManaScreen(GameScreen):
     def __init__(self, location, player, game_loop):
@@ -665,6 +689,7 @@ class TransposeManaScreen(GameScreen):
             except ValueError:
                 print("Please enter a valid number.")
         input("Press Enter to continue...")
+        self.clear_screen()
 
 class CombatVictoryScreen(GameScreen):
     def __init__(self, location, player, game_loop):
