@@ -1,13 +1,10 @@
 add ascii art
 
-consume souls to heal, regain mana, or buff damage or buff defense
-
 
 future:
 implement:
-1. scroll items
-2. functionality for each scroll
-3. scroll items as loot from combatvictory
+1. functionality for each scroll
+2. sell scrolls in a store
 
 store feature
 buy scrolls

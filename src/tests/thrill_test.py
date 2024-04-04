@@ -84,6 +84,40 @@ class Player(Character):
     def add_souls(self, amount):
         self.souls += amount
         print(f"You found {amount} souls!")
+    
+    def buy_item(self, item):
+        if self.souls >= item.cost:
+            self.souls -= item.cost
+            self.add_item(item)
+            print(f"{item.name} purchased successfully. You spent {item.cost} souls.")
+        else:
+            print("Not enough souls to purchase this item.")
+
+class Vendor:
+    def __init__(self):
+        self.scrolls = Magic.generate_scrolls()
+
+    def display_items(self):
+        for index, scroll in enumerate(self.scrolls):
+            print(f"{index + 1}. {scroll.name} - {scroll.lore}")
+
+class Scroll:
+    def __init__(self, name, effect, lore, cost):
+        self.name = name
+        self.effect = effect
+        self.lore = lore
+        self.cost = cost  # Adding cost attribute
+        self.quantity = 1  # Scrolls are single-use by default
+
+    def use(self, target):
+        # Implement the effect of the scroll here
+        pass
+
+
+    def use(self, target):
+        # Implement the effect of the scroll here
+        # For example, if the scroll heals, increase the target's health
+        pass
 
 class Magic:
     items = []
@@ -103,6 +137,16 @@ class Magic:
                     "lore2": row.get("Lore2", "Ancient secrets remain untold.")
                 })
 
+    @classmethod
+    def generate_scrolls(cls):
+        scrolls = []
+        for item in cls.items:
+            if item["type"].lower() in ["spell", "enchantment"]:
+                # Make sure to convert the 'cost' from string to an integer
+                scroll = Scroll(name=item["name"], effect=item["effect"], lore=item.get("lore", "No lore available."), cost=int(item["cost"]))
+                scrolls.append(scroll)
+        return scrolls
+
     @staticmethod
     def format_magic_info(magic):
         name_and_effect = f'{magic["name"]} - {magic["effect"]} ({magic["cost"]})\n'
@@ -118,10 +162,19 @@ class Magic:
         return info
 
 class Location:
-    def __init__(self, name, generate_enemy_flag=True):
+    def __init__(self, name, generate_content_flag=True):
         self.name = name
         self.connections = []
-        self.enemy = self.generate_enemy() if generate_enemy_flag else None
+        self.content = self.generate_content() if generate_content_flag else None
+
+    def generate_content(self):
+        choice = random.choice(['enemy', 'vendor', None])
+        if choice == 'enemy':
+            return Enemy.generate_random_enemy()
+        elif choice == 'vendor':
+            return Vendor()
+        else:
+            return None
 
     def connect(self, node):
         if node not in self.connections:
@@ -135,11 +188,12 @@ class Location:
 
 class Map:
     def __init__(self, size, locations_csv_path='src/tests/locations.csv'):
-        self.nodes = [Location("Soulink Shrine", generate_enemy_flag=False)]
+        self.nodes = [Location("Soulink Shrine", generate_content_flag=False)]  # Changed here
         location_names = self.load_location_names(locations_csv_path)
         random.shuffle(location_names)
         extended_location_names = (location_names * ((size // len(location_names)) + 1))[:size-1]
-        self.nodes += [Location(name, generate_enemy_flag=True) for name in extended_location_names]
+        # Use `generate_content_flag=True` for the rest of the locations to potentially generate enemies or vendors
+        self.nodes += [Location(name, generate_content_flag=True) for name in extended_location_names]
         
         self.generate_graph()
         self.ensure_at_least_one_enemy()
@@ -159,12 +213,15 @@ class Map:
                 self.nodes[i].connect(random.choice(self.nodes[:i]))
 
     def ensure_at_least_one_enemy(self):
-        if not any(node.enemy for node in self.nodes):
-            random.choice(self.nodes[1:]).enemy = Enemy.generate_random_enemy()
+        # Check if any location has an Enemy as its content
+        if not any(isinstance(node.content, Enemy) for node in self.nodes):
+            # If no location has an Enemy, randomly choose a non-starting location to add an Enemy to
+            chosen_location = random.choice(self.nodes[1:])
+            chosen_location.content = Enemy.generate_random_enemy()
 
 #==========================================#
 #             USER INTERFACES              #
-#             ---------------              #            
+#             ---------------              #
 #==========================================#
 
 class GameScreen:
@@ -262,8 +319,10 @@ class ExplorationScreen(GameScreen):
             self.print_dashes()
             print(f"You are in {self.location.name}.".center(self.DASH_WIDTH))
             self.print_dashes()
-            if self.location.enemy and self.location.enemy.is_alive():
-                print(f"An enemy {self.location.enemy.name} is here!")
+            if isinstance(self.location.content, Enemy) and self.location.content.is_alive():
+                print(f"An enemy {self.location.content.name} is here!")
+            elif isinstance(self.location.content, Vendor):
+                print("A mysterious vendor is here, offering scrolls of magical power.")
             print("Connections:")
             for i, connection in enumerate(self.location.connections):
                 print(f" {i + 1}: {connection.name}")
@@ -606,6 +665,33 @@ class CombatScreen(GameScreen):
         if not self.player.is_alive():
             DefeatScreen(self.location, self.game_loop).display()
 
+class VendorScreen(GameScreen):
+    def __init__(self, location, player, game_loop):
+        super().__init__(location, game_loop)
+        self.player = player
+
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+        print("Welcome to the Vendor's Shop!".center(self.DASH_WIDTH))
+        self.print_dashes()
+        vendor = self.location.content
+        for index, scroll in enumerate(vendor.scrolls, start=1):
+            print(f"{index}. {scroll.name} - Cost: {scroll.cost} souls - {scroll.lore}")
+        self.print_dashes()
+        print("Select a scroll to purchase, or 0 to exit:")
+        choice = input("> ").strip()
+        if choice.isdigit():
+            choice = int(choice) - 1
+            if 0 <= choice < len(vendor.scrolls):
+                self.player.buy_item(vendor.scrolls[choice])
+            elif choice == -1:
+                return
+            else:
+                print("Invalid choice.")
+        else:
+            print("Please enter a valid number.")
+
 #==========================================#
 #          COMBAT SUBDIRECTORY UI          #
 #==========================================#
@@ -780,13 +866,16 @@ class StateEngine:
 
     def update_screen(self):
         if not self.player.is_alive():
-            self.current_screen = DefeatScreen(self.current_node)
+            self.current_screen = DefeatScreen(self.current_node, self)
         elif self.have_defeated_all_enemies():
-            self.current_screen = VictoryScreen(self.current_node)
-        elif self.current_node.enemy and self.current_node.enemy.is_alive():
-            self.current_screen = CombatScreen(self.current_node, self.player, self.current_node.enemy, self)
+            self.current_screen = VictoryScreen(self.current_node, self)
+        elif isinstance(self.current_node.content, Enemy) and self.current_node.content.is_alive():
+            self.current_screen = CombatScreen(self.current_node, self.player, self.current_node.content, self)
+        elif isinstance(self.current_node.content, Vendor):
+            self.current_screen = VendorScreen(self.current_node, self.player, self)
         else:
             self.current_screen = ExplorationScreen(self.current_node, self)
+
 
     def play(self):
         while self.player.is_alive() and not self.have_defeated_all_enemies():
@@ -799,10 +888,8 @@ class StateEngine:
             VictoryScreen(self.current_node).display()
 
     def have_defeated_all_enemies(self):
-        for node in self.graph.nodes:
-            if node.enemy and node.enemy.is_alive():
-                return False
-        return True
+        # Iterate through each node in the graph and check if the content is an Enemy and if it's alive
+        return not any(isinstance(node.content, Enemy) and node.content.is_alive() for node in self.graph.nodes)
 
 #==========================================#
 #             MODULE  CHECKING             #
