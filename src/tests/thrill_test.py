@@ -110,14 +110,11 @@ class Scroll:
         self.quantity = 1  # Scrolls are single-use by default
 
     def use(self, target):
-        # Implement the effect of the scroll here
-        pass
-
-
-    def use(self, target):
-        # Implement the effect of the scroll here
-        # For example, if the scroll heals, increase the target's health
-        pass
+        if self.effect == 'Heal':
+            heal_amount = 20  # Example fixed heal amount
+            target.health += heal_amount
+            target.health = min(target.health, target.max_health)  # Prevent overhealing
+            print(f"{target.name} healed for {heal_amount} HP!")
 
 class Magic:
     items = []
@@ -165,15 +162,21 @@ class Location:
     def __init__(self, name, generate_content_flag=True):
         self.name = name
         self.connections = []
+        self.visited = False  # Track if visited
+        self.content_type = None  # Track the type of content ('enemy', 'vendor', 'none')
         self.content = self.generate_content() if generate_content_flag else None
 
     def generate_content(self):
         choice = random.choice(['enemy', 'vendor', None])
+        self.visited = True
         if choice == 'enemy':
+            self.content_type = 'enemy'
             return Enemy.generate_random_enemy()
         elif choice == 'vendor':
+            self.content_type = 'vendor'
             return Vendor()
         else:
+            self.content_type = 'none'
             return None
 
     def connect(self, node):
@@ -311,6 +314,7 @@ class ExplorationScreen(GameScreen):
 
     def move_to_location(self, new_location):
         self.game_loop.previous_node = self.game_loop.current_node
+        new_location.visited = True
         self.game_loop.current_node = new_location
 
     def display(self):
@@ -436,8 +440,6 @@ class MagicGlossaryScreen(GameScreen):
         self.print_dashes()
         print("Select a magic item to learn more:".center(self.DASH_WIDTH))
         self.print_dashes()
-
-        Magic.load_magic_from_csv('src/tests/scrolls.csv')
 
         abilities = [item for item in Magic.items if item['type'].lower() == 'ability']
         spells = [item for item in Magic.items if item['type'].lower() == 'spell']
@@ -573,10 +575,13 @@ class LocationDetailScreen(GameScreen):
         self.print_dashes()
         print(f"Room Details: {self.location.name}".center(self.DASH_WIDTH))
         self.print_dashes()
-        print("Connections:")
+        print("Connections and Encounters:")
         for i, connected_node in enumerate(self.location.connections):
-            print(f" {i + 1}. {connected_node.name}")
+            visit_status = "Not Visited" if not connected_node.visited else connected_node.content_type.capitalize()
+            print(f" {i + 1}. {connected_node.name} - {visit_status}")
         self.print_dashes()
+        input("Press Enter to return...")
+
 
 #==========================================#
 #       EXPLORATION SUBDIRECTORY UI        #
@@ -667,30 +672,38 @@ class CombatScreen(GameScreen):
 
 class VendorScreen(GameScreen):
     def __init__(self, location, player, game_loop):
-        super().__init__(location, game_loop)
-        self.player = player
+        super().__init__(location, game_loop)  # Call the superclass constructor correctly
+        self.player = player  # Handle the additional 'player' argument
 
     def display(self):
-        self.clear_screen()
-        self.print_dashes()
-        print("Welcome to the Vendor's Shop!".center(self.DASH_WIDTH))
-        self.print_dashes()
-        vendor = self.location.content
-        for index, scroll in enumerate(vendor.scrolls, start=1):
-            print(f"{index}. {scroll.name} - Cost: {scroll.cost} souls - {scroll.lore}")
-        self.print_dashes()
-        print("Select a scroll to purchase, or 0 to exit:")
-        choice = input("> ").strip()
-        if choice.isdigit():
-            choice = int(choice) - 1
-            if 0 <= choice < len(vendor.scrolls):
-                self.player.buy_item(vendor.scrolls[choice])
-            elif choice == -1:
-                return
+        while True:
+            self.clear_screen()
+            self.print_dashes()
+            print("Welcome to the Vendor's Shop!".center(self.DASH_WIDTH))
+            self.print_dashes()
+            for index, scroll in enumerate(self.location.content.scrolls, start=1):
+                print(f"{index}. {scroll.name} - Cost: {scroll.cost} souls")
+            self.print_dashes()
+            print("Select a scroll to purchase, or 0 to exit:")
+            choice = input("Your choice: ").strip()
+
+            if choice == '0':
+                print("Exiting the Vendor's Shop...")
+                self.game_loop.coming_from_vendor = False  # Indicate that we're exiting the vendor screen
+                break  # Break out of the loop to exit
+
+            elif choice.isdigit():
+                choice = int(choice) - 1
+                if 0 <= choice < len(self.location.content.scrolls):
+                    self.player.buy_item(self.location.content.scrolls[choice])
+                else:
+                    print("Invalid choice. Please select a valid number or 0 to exit.")
             else:
-                print("Invalid choice.")
-        else:
-            print("Please enter a valid number.")
+                print("Please enter a valid number.")
+
+        # After breaking out of the loop, ensure control is returned to the exploration screen or the main game loop.
+        self.game_loop.update_screen()  # Update the game state or transition
+
 
 #==========================================#
 #          COMBAT SUBDIRECTORY UI          #
@@ -715,7 +728,7 @@ class CombatSoulsScreen(GameScreen):
         choice = input("Choose an option: ")
 
         if choice == '1':
-            hp_deficit = self.max_health - self.health
+            hp_deficit = self.player.max_health - self.player.health  # Corrected
             hp_to_heal = min(self.player.souls, hp_deficit)
             self.player.health += hp_to_heal
             self.player.souls -= hp_to_heal
@@ -858,11 +871,12 @@ class DefeatScreen(GameScreen):
 #==========================================#
 
 class StateEngine:
-    def __init__(self, size=5):
+    def __init__(self, size=8):
         self.graph = Map(size)
         self.current_node = self.graph.nodes[0]
         self.previous_node = None
         self.player = Player()
+        self.coming_from_vendor = False
 
     def update_screen(self):
         if not self.player.is_alive():
@@ -871,10 +885,15 @@ class StateEngine:
             self.current_screen = VictoryScreen(self.current_node, self)
         elif isinstance(self.current_node.content, Enemy) and self.current_node.content.is_alive():
             self.current_screen = CombatScreen(self.current_node, self.player, self.current_node.content, self)
-        elif isinstance(self.current_node.content, Vendor):
+        # Check if the current content is a Vendor and if we are not coming from the vendor screen
+        elif isinstance(self.current_node.content, Vendor) and not self.coming_from_vendor:
             self.current_screen = VendorScreen(self.current_node, self.player, self)
+            self.coming_from_vendor = True  # Set the flag when entering the vendor screen
         else:
             self.current_screen = ExplorationScreen(self.current_node, self)
+            self.coming_from_vendor = False  # Reset the flag to ensure correct flow for next interactions
+
+
 
 
     def play(self):
@@ -896,5 +915,6 @@ class StateEngine:
 #==========================================#
 
 if __name__ == "__main__":
+    Magic.load_magic_from_csv('src/tests/scrolls.csv')
     game = StateEngine()
     game.play()

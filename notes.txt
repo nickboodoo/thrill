@@ -4,9 +4,10 @@ add ascii art
 future:
 implement:
 1. functionality for each scroll
-2. sell scrolls in a store
 
-store feature
+store feature:
+store currently shows no spells
+
 buy scrolls
 buy heal potions
 buy mana potions
