@@ -6,8 +6,5 @@ implement:
 1. functionality for each scroll
 
 store feature:
-store currently shows no spells
 
 buy scrolls
-buy heal potions
-buy mana potions
