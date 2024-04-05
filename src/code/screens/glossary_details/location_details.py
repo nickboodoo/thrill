@@ -1,3 +1,6 @@
+from screens.game_screen_parent import GameScreen
+
+
 class LocationDetailScreen(GameScreen):
     def __init__(self, location, game_loop, room):
         super().__init__(location, game_loop)

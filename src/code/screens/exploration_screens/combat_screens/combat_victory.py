@@ -1,3 +1,9 @@
+import random
+import textwrap
+from screens.game_screen_parent import GameScreen
+from screens.glossary_screen import GlossaryScreen
+
+
 class CombatVictoryScreen(GameScreen):
     def __init__(self, location, player, game_loop):
         super().__init__(location, game_loop)

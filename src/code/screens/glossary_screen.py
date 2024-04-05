@@ -1,3 +1,10 @@
+from screens.game_screen_parent import GameScreen
+from screens.glossary_screens.about_game import AboutGameGlossaryScreen
+from screens.glossary_screens.enemy_glossary import EnemyGlossaryScreen
+from screens.glossary_screens.location_glossary import LocationGlossaryScreen
+from screens.glossary_screens.magic_glossary import MagicGlossaryScreen
+
+
 class GlossaryScreen(GameScreen):
     def display(self):
         while True:

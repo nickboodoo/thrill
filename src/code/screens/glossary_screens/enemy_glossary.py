@@ -1,3 +1,8 @@
+from logic.enemy import Enemy
+from screens.game_screen_parent import GameScreen
+from screens.glossary_details.enemy_details import EnemyDetailScreen
+
+
 class EnemyGlossaryScreen(GameScreen):
     MAX_ENTRIES_PER_COLUMN = 10
 

@@ -1,3 +1,6 @@
+from logic.character import Character
+
+
 class Player(Character):
     def __init__(self, name='Player', health=100, attack=25, mana=100):
         super().__init__(name, health, attack, mana)

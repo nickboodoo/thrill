@@ -1,9 +1,15 @@
+import random
+
+from logic.enemy import Enemy
+from logic.vendor import Vendor
+
+
 class Location:
     def __init__(self, name, generate_content_flag=True):
         self.name = name
         self.connections = []
-        self.visited = False  # Track if visited
-        self.content_type = None  # Track the type of content ('enemy', 'vendor', 'none')
+        self.visited = False
+        self.content_type = None
         self.content = self.generate_content() if generate_content_flag else None
 
     def generate_content(self):

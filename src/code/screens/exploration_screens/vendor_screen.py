@@ -1,7 +1,10 @@
+from screens.game_screen_parent import GameScreen
+
+
 class VendorScreen(GameScreen):
     def __init__(self, location, player, game_loop):
-        super().__init__(location, game_loop)  # Call the superclass constructor correctly
-        self.player = player  # Handle the additional 'player' argument
+        super().__init__(location, game_loop)
+        self.player = player
 
     def display(self):
         while True:
@@ -17,8 +20,8 @@ class VendorScreen(GameScreen):
 
             if choice == '0':
                 print("Exiting the Vendor's Shop...")
-                self.game_loop.coming_from_vendor = False  # Indicate that we're exiting the vendor screen
-                break  # Break out of the loop to exit
+                self.game_loop.coming_from_vendor = False
+                break
 
             elif choice.isdigit():
                 choice = int(choice) - 1
@@ -29,5 +32,4 @@ class VendorScreen(GameScreen):
             else:
                 print("Please enter a valid number.")
 
-        # After breaking out of the loop, ensure control is returned to the exploration screen or the main game loop.
-        self.game_loop.update_screen()  # Update the game state or transition
+        self.game_loop.update_screen()

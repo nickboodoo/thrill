@@ -1,3 +1,6 @@
+import os
+
+
 class GameScreen:
     DASH_WIDTH = 90
     LORE_TEXT_WIDTH = 65

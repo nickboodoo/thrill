@@ -1,3 +1,10 @@
+from screens.exploration_screens.combat_screens.combat_souls import CombatSoulsScreen
+from screens.exploration_screens.combat_screens.combat_victory import CombatVictoryScreen
+from screens.exploration_screens.combat_screens.transpose_mana import TransposeManaScreen
+from screens.game_screen_parent import GameScreen
+from screens.gamestate_screen.defeat_screen import DefeatScreen
+
+
 class CombatScreen(GameScreen):
     def __init__(self, location, player, enemy, game_loop):
         super().__init__(location)

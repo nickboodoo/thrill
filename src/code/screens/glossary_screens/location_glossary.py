@@ -1,3 +1,7 @@
+from screens.game_screen_parent import GameScreen
+from screens.glossary_details.location_details import LocationDetailScreen
+
+
 class LocationGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
         super().__init__(location, game_loop)

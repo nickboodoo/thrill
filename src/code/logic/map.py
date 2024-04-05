@@ -1,5 +1,11 @@
+import csv
+import random
+from logic.enemy import Enemy
+from logic.location import Location
+
+
 class Map:
-    def __init__(self, size, locations_csv_path='src/tests/locations.csv'):
+    def __init__(self, size, locations_csv_path='src/data/locations.csv'):
         self.nodes = [Location("Soulink Shrine", generate_content_flag=False)]  # Changed here
         location_names = self.load_location_names(locations_csv_path)
         random.shuffle(location_names)

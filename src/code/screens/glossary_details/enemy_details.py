@@ -1,3 +1,7 @@
+from logic.enemy import Enemy
+from screens.game_screen_parent import GameScreen
+
+
 class EnemyDetailScreen(GameScreen):
     def __init__(self, location, enemy):
         super().__init__(location)

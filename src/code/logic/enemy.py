@@ -1,3 +1,10 @@
+import csv
+import random
+import textwrap
+from logic.character import Character
+from screens.game_screen_parent import GameScreen
+
+
 class Enemy(Character):
     enemies = []
 
@@ -17,7 +24,7 @@ class Enemy(Character):
     @staticmethod
     def generate_random_enemy():
         if not Enemy.enemies:
-            Enemy.load_enemies_from_csv('src/tests/enemies.csv')
+            Enemy.load_enemies_from_csv('src/data/enemies.csv')
         enemy_info = random.choice(Enemy.enemies)
         return Enemy(enemy_info["name"], enemy_info["health"], enemy_info["attack"])
 

@@ -1,3 +1,6 @@
+from screens.game_screen_parent import GameScreen
+
+
 class TransposeManaScreen(GameScreen):
     def __init__(self, location, player, game_loop):
         super().__init__(location, game_loop)

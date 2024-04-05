@@ -8,6 +8,8 @@ import textwrap
 #              -------------               #
 #==========================================#
 
+# DONE
+
 class Character:
     def __init__(self, name, health, attack, mana=0):
         self.name = name

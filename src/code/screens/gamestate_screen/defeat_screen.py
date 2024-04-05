@@ -1,3 +1,7 @@
+from screens.game_screen_parent import GameScreen
+from screens.gamestate_screen.state_engine import StateEngine
+
+
 class DefeatScreen(GameScreen):
     def display(self):
         self.clear_screen()

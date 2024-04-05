@@ -1,3 +1,6 @@
+from logic.magic import Magic
+
+
 class Vendor:
     def __init__(self):
         self.scrolls = Magic.generate_scrolls()

@@ -1,3 +1,8 @@
+from logic.magic import Magic
+from screens.game_screen_parent import GameScreen
+from screens.glossary_details.magic_details import MagicDetailsGlossary
+
+
 class MagicGlossaryScreen(GameScreen):
     MAX_ENTRIES_PER_COLUMN = 10
 

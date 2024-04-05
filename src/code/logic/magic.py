@@ -1,3 +1,8 @@
+import csv
+import textwrap
+from logic.scroll import Scroll
+
+
 class Magic:
     items = []
 
@@ -21,7 +26,6 @@ class Magic:
         scrolls = []
         for item in cls.items:
             if item["type"].lower() in ["spell", "enchantment"]:
-                # Make sure to convert the 'cost' from string to an integer
                 scroll = Scroll(name=item["name"], effect=item["effect"], lore=item.get("lore", "No lore available."), cost=int(item["cost"]))
                 scrolls.append(scroll)
         return scrolls

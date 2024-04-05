@@ -1,3 +1,7 @@
+import textwrap
+from screens.game_screen_parent import GameScreen
+
+
 class AboutGameGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
         super().__init__(location, game_loop)

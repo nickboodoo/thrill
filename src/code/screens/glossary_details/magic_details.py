@@ -1,3 +1,7 @@
+import textwrap
+from screens.game_screen_parent import GameScreen
+
+
 class MagicDetailsGlossary(GameScreen):
     def __init__(self, location, magic_item, game_loop=None):
         super().__init__(location, game_loop)
