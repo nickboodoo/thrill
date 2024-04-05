@@ -1,2 +1,4 @@
 if __name__ == "__main__":
-    print("FOR THE THRILL OF THE HUNT")
+    Magic.load_magic_from_csv('src/tests/scrolls.csv')
+    game = StateEngine()
+    game.play()

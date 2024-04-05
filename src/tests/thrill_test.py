@@ -227,6 +227,8 @@ class Map:
 #             ---------------              #
 #==========================================#
 
+# DONE
+
 class GameScreen:
     DASH_WIDTH = 90
     LORE_TEXT_WIDTH = 65
@@ -353,6 +355,8 @@ class ExplorationScreen(GameScreen):
 #==========================================#
 #         GLOSSARY SUBDIRECTORY UI         #
 #==========================================#
+
+# DONE
 
 class AboutGameGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
@@ -523,6 +527,8 @@ class LocationGlossaryScreen(GameScreen):
 #     GLOSSARY DETAILS SUBDIRECTORY UI     #
 #==========================================#
 
+# DONE
+
 class EnemyDetailScreen(GameScreen):
     def __init__(self, location, enemy):
         super().__init__(location)
@@ -586,6 +592,8 @@ class LocationDetailScreen(GameScreen):
 #==========================================#
 #       EXPLORATION SUBDIRECTORY UI        #
 #==========================================#
+
+# DONE
 
 class CombatScreen(GameScreen):
     def __init__(self, location, player, enemy, game_loop):
@@ -708,6 +716,8 @@ class VendorScreen(GameScreen):
 #==========================================#
 #          COMBAT SUBDIRECTORY UI          #
 #==========================================#
+
+# DONE
 
 class CombatSoulsScreen(GameScreen):
     def __init__(self, location, player, game_loop):
@@ -839,6 +849,8 @@ class TransposeManaScreen(GameScreen):
 #              GAME ENDING UI              #
 #==========================================#
 
+# DONE
+
 class VictoryScreen(GameScreen):
     def display(self):
         self.clear_screen()
@@ -869,6 +881,8 @@ class DefeatScreen(GameScreen):
 #==========================================#
 #       STATE ENGINE (UI CONTROLLER)       #
 #==========================================#
+
+# DONE
 
 class StateEngine:
     def __init__(self, size=8):
