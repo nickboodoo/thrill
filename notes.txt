@@ -11,3 +11,5 @@ buy scrolls
 
 
 CIRCULAR IMPORT ISSUE
+
+go through and figure out what is deprecated and remove it

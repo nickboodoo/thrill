@@ -10,6 +10,17 @@ import textwrap
 
 # DONE
 
+# Constants
+LORE_TEXT_WIDTH = 65
+
+class Scroll:
+    def __init__(self, name, effect, lore, cost):
+        self.name = name
+        self.effect = effect
+        self.lore = lore
+        self.cost = cost
+        self.quantity = 1
+
 class Character:
     def __init__(self, name, health, attack, mana=0):
         self.name = name
@@ -18,6 +29,7 @@ class Character:
         self.strength = attack
         self.mana = mana
         self.is_immune = False
+        self.inventory = []
 
     def is_alive(self):
         return self.health > 0
@@ -37,7 +49,7 @@ class Character:
             self.inventory.remove(item)
 
     def use_item(self, item, target=None):
-        if item in self.inventory and isinstance(item):
+        if item in self.inventory and isinstance(item, Scroll):
             item.use(target or self)
             item.quantity -= 1
             if item.quantity <= 0:
@@ -62,18 +74,15 @@ class Enemy(Character):
     @staticmethod
     def generate_random_enemy():
         if not Enemy.enemies:
-            Enemy.load_enemies_from_csv('src/tests/enemies.csv')
+            Enemy.load_enemies_from_csv('src/data/enemies.csv')
         enemy_info = random.choice(Enemy.enemies)
         return Enemy(enemy_info["name"], enemy_info["health"], enemy_info["attack"])
 
     @staticmethod
     def format_enemy_info(enemy):
-        name_and_stats = f'{enemy["name"]} ({enemy["health"]} HP, {enemy["attack"]} Attack):\n'
-        lore = f'"{enemy["lore"]}"'
-        wrapped_lore_lines = textwrap.wrap(lore, width=GameScreen.LORE_TEXT_WIDTH)
-        centered_lore_lines = [line.center(GameScreen.LORE_TEXT_WIDTH) for line in wrapped_lore_lines]
-        centered_lore = "\n".join(centered_lore_lines)
-        info = f"{name_and_stats}\n{centered_lore}"
+        wrapped_lore_lines = textwrap.wrap(enemy["lore"], width=LORE_TEXT_WIDTH)
+        centered_lore = "\n".join(line.center(LORE_TEXT_WIDTH) for line in wrapped_lore_lines)
+        info = f'{enemy["name"]} ({enemy["health"]} HP, {enemy["attack"]} Attack):\n{centered_lore}'
         return info
 
 class Player(Character):
@@ -102,21 +111,6 @@ class Vendor:
     def display_items(self):
         for index, scroll in enumerate(self.scrolls):
             print(f"{index + 1}. {scroll.name} - {scroll.lore}")
-
-class Scroll:
-    def __init__(self, name, effect, lore, cost):
-        self.name = name
-        self.effect = effect
-        self.lore = lore
-        self.cost = cost  # Adding cost attribute
-        self.quantity = 1  # Scrolls are single-use by default
-
-    def use(self, target):
-        if self.effect == 'Heal':
-            heal_amount = 20  # Example fixed heal amount
-            target.health += heal_amount
-            target.health = min(target.health, target.max_health)  # Prevent overhealing
-            print(f"{target.name} healed for {heal_amount} HP!")
 
 class Magic:
     items = []
@@ -192,7 +186,7 @@ class Location:
         return None
 
 class Map:
-    def __init__(self, size, locations_csv_path='src/tests/locations.csv'):
+    def __init__(self, size, locations_csv_path='src/data/locations.csv'):
         self.nodes = [Location("Soulink Shrine", generate_content_flag=False)]  # Changed here
         location_names = self.load_location_names(locations_csv_path)
         random.shuffle(location_names)
@@ -931,6 +925,6 @@ class StateEngine:
 #==========================================#
 
 if __name__ == "__main__":
-    Magic.load_magic_from_csv('src/tests/scrolls.csv')
+    Magic.load_magic_from_csv('src/data/scrolls.csv')
     game = StateEngine()
     game.play()
