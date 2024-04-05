@@ -74,7 +74,7 @@ class Enemy(Character):
     @staticmethod
     def generate_random_enemy():
         if not Enemy.enemies:
-            Enemy.load_enemies_from_csv('src/data/enemies.csv')
+            Enemy.load_enemies_from_csv('src/tests/enemies.csv')
         enemy_info = random.choice(Enemy.enemies)
         return Enemy(enemy_info["name"], enemy_info["health"], enemy_info["attack"])
 
@@ -186,7 +186,7 @@ class Location:
         return None
 
 class Map:
-    def __init__(self, size, locations_csv_path='src/data/locations.csv'):
+    def __init__(self, size, locations_csv_path='src/tests/locations.csv'):
         self.nodes = [Location("Soulink Shrine", generate_content_flag=False)]  # Changed here
         location_names = self.load_location_names(locations_csv_path)
         random.shuffle(location_names)
@@ -693,20 +693,13 @@ class VendorScreen(GameScreen):
 
             if choice == '0':
                 print("Exiting the Vendor's Shop...")
-                self.game_loop.coming_from_vendor = False  # Indicate that we're exiting the vendor screen
-                break  # Break out of the loop to exit
+                self.game_loop.coming_from_vendor = False
+                break
 
-            elif choice.isdigit():
-                choice = int(choice) - 1
-                if 0 <= choice < len(self.location.content.scrolls):
-                    self.player.buy_item(self.location.content.scrolls[choice])
-                else:
-                    print("Invalid choice. Please select a valid number or 0 to exit.")
             else:
-                print("Please enter a valid number.")
+                print("Please enter '0' This code is not implemented yet.")
 
-        # After breaking out of the loop, ensure control is returned to the exploration screen or the main game loop.
-        self.game_loop.update_screen()  # Update the game state or transition
+        self.game_loop.update_screen()
 
 
 #==========================================#
@@ -925,6 +918,6 @@ class StateEngine:
 #==========================================#
 
 if __name__ == "__main__":
-    Magic.load_magic_from_csv('src/data/scrolls.csv')
+    Magic.load_magic_from_csv('src/tests/scrolls.csv')
     game = StateEngine()
     game.play()

@@ -1,15 +1,8 @@
 add ascii art
 
 
-future:
-implement:
-1. functionality for each scroll
 
-store feature:
-
-buy scrolls
-
-
-CIRCULAR IMPORT ISSUE
+build issues:
+thorough testing needed to see what is broken
 
 go through and figure out what is deprecated and remove it
