@@ -8,9 +8,6 @@ import textwrap
 #              -------------               #
 #==========================================#
 
-# DONE
-
-# Constants
 LORE_TEXT_WIDTH = 65
 
 class Scroll:
@@ -698,7 +695,6 @@ class VendorScreen(GameScreen):
 #          COMBAT SUBDIRECTORY UI          #
 #==========================================#
 
-# DONE
 
 class CombatSoulsScreen(GameScreen):
     def __init__(self, location, player, game_loop):
@@ -830,7 +826,6 @@ class TransposeManaScreen(GameScreen):
 #              GAME ENDING UI              #
 #==========================================#
 
-# DONE
 
 class VictoryScreen(GameScreen):
     def display(self):
@@ -863,7 +858,6 @@ class DefeatScreen(GameScreen):
 #       STATE ENGINE (UI CONTROLLER)       #
 #==========================================#
 
-# DONE
 
 class StateEngine:
     def __init__(self, size=8):
