@@ -523,7 +523,6 @@ class LocationGlossaryScreen(GameScreen):
 #     GLOSSARY DETAILS SUBDIRECTORY UI     #
 #==========================================#
 
-# DONE
 
 class EnemyDetailScreen(GameScreen):
     def __init__(self, location, enemy):
@@ -588,8 +587,6 @@ class LocationDetailScreen(GameScreen):
 #==========================================#
 #       EXPLORATION SUBDIRECTORY UI        #
 #==========================================#
-
-# DONE
 
 class CombatScreen(GameScreen):
     def __init__(self, location, player, enemy, game_loop):
@@ -676,8 +673,8 @@ class CombatScreen(GameScreen):
 
 class VendorScreen(GameScreen):
     def __init__(self, location, player, game_loop):
-        super().__init__(location, game_loop)  # Call the superclass constructor correctly
-        self.player = player  # Handle the additional 'player' argument
+        super().__init__(location, game_loop)
+        self.player = player
 
     def display(self):
         while True:
