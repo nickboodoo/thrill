@@ -187,11 +187,10 @@ class Location:
 
 class Map:
     def __init__(self, size, locations_csv_path='src/tests/locations.csv'):
-        self.nodes = [Location("Soulink Shrine", generate_content_flag=False)]  # Changed here
+        self.nodes = [Location("Soulink Shrine", generate_content_flag=False)]
         location_names = self.load_location_names(locations_csv_path)
         random.shuffle(location_names)
         extended_location_names = (location_names * ((size // len(location_names)) + 1))[:size-1]
-        # Use `generate_content_flag=True` for the rest of the locations to potentially generate enemies or vendors
         self.nodes += [Location(name, generate_content_flag=True) for name in extended_location_names]
         
         self.generate_graph()
@@ -212,9 +211,7 @@ class Map:
                 self.nodes[i].connect(random.choice(self.nodes[:i]))
 
     def ensure_at_least_one_enemy(self):
-        # Check if any location has an Enemy as its content
         if not any(isinstance(node.content, Enemy) for node in self.nodes):
-            # If no location has an Enemy, randomly choose a non-starting location to add an Enemy to
             chosen_location = random.choice(self.nodes[1:])
             chosen_location.content = Enemy.generate_random_enemy()
 
@@ -223,7 +220,6 @@ class Map:
 #             ---------------              #
 #==========================================#
 
-# DONE
 
 class GameScreen:
     DASH_WIDTH = 90
@@ -352,7 +348,6 @@ class ExplorationScreen(GameScreen):
 #         GLOSSARY SUBDIRECTORY UI         #
 #==========================================#
 
-# DONE
 
 class AboutGameGlossaryScreen(GameScreen):
     def __init__(self, location, game_loop):
