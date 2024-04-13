@@ -1,8 +1,29 @@
-add ascii art
+# THRILL - Beta Release v1.0.0-beta
 
+Welcome to the beta release of **THRILL**, an exciting adventure game where strategy and chance collide. This initial release features the standalone executable for Windows, allowing players to dive right into the game without needing to install additional software.
 
+## Release Highlights
 
-build issues:
-thorough testing needed to see what is broken
+- **Standalone Executable:** Just download and run - no installation required!
+- **Enhanced Gameplay:** Experience our first level with optimized game mechanics and engaging narrative.
+- **Bug Reporting:** As this is a beta release, your feedback on any bugs or performance issues will be invaluable.
 
-go through and figure out what is deprecated and remove it
+## How to Run
+
+1. Download `thrill_test.exe` from the Assets section below.
+2. Double-click the executable to start the game on any Windows machine.
+3. Enjoy exploring the game and please report any feedback or issues you encounter.
+
+## Reporting Issues
+
+Encountered a bug? We would love to hear about it! Please report it under the [Issues](https://github.com/nickboodoo/thrill/issues) section of our GitHub repository.
+
+## What's Next?
+
+This beta test aims to gather user feedback and identify bugs before our full launch. Your contributions and suggestions will shape the future of **thrill**!
+
+## Known Issues
+
+- Upon exiting the game on unix systems (Windows untested), the executable will crash. This does not affect game performance.
+
+We hope you enjoy testing **THRILL** and look forward to your valuable insights!
