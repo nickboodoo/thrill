@@ -10,21 +10,22 @@ This Python-based fantasy adventure game lets players explore mystical lands, en
 - **Lore Glossary:** Access detailed information about the game's lore, enemies, magic spells, and locations.
 - **Persistent World State:** The game world evolves based on the player's actions, keeping track of defeated enemies and acquired items.
 
-## Installation
+## Getting Started
 
-Ensure you have Python 3.7+ installed on your system. No additional libraries are required for the basic functionality.
+### Prerequisites
+To run the game, you will need a system that supports `.exe` executable files, which typically means you will need to be on a Windows operating system.
 
-1. **Clone the Repository:**
+### Download
+1. Visit the [Releases page](https://github.com/yourusername/thrill/releases) of the thrill repository.
+2. Download the latest release of the game, `thrill_test.exe`, found under Assets.
 
-       git clone https://github.com/[YOURUSERNAMEHERE]/thrill.git
+### Installation
+No installation is required! The game is a standalone executable.
 
-2. **Navigate to the game folder:**
-
-        cd thrill
-
-3. **Run the Game:**
-
-       python thrill_test.py
+### Running the Game
+1. Navigate to the folder where you downloaded `thrill_test.exe`.
+2. Double-click on `thrill_test.exe` to start the game.
+3. Follow the on-screen instructions to play the game.
 
 ## How to Play
 
@@ -57,3 +58,4 @@ Contributions are welcome! Please reach out to me before you attempt to submit p
 ## License
 
 This project is licensed under the MIT License - see the LICENSE.md file for details.
+
