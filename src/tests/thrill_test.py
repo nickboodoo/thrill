@@ -1,7 +1,14 @@
-import random
+import sys
 import os
+import random
 import csv
 import textwrap
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
 
 #==========================================#
 #              LOGIC CLASSES               #
@@ -57,6 +64,7 @@ class Enemy(Character):
 
     @classmethod
     def load_enemies_from_csv(cls, filepath):
+        filepath = resource_path(filepath)
         with open(filepath, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             cls.enemies = []
@@ -67,6 +75,7 @@ class Enemy(Character):
                     "attack": int(row["attack"]),
                     "lore": row.get("lore", "Lore not available.")
                 })
+
 
     @staticmethod
     def generate_random_enemy():
@@ -183,8 +192,14 @@ class Location:
         return None
 
 class Map:
-    def __init__(self, size, locations_csv_path='src/tests/locations.csv'):
+    def __init__(self, size, locations_csv_path=None):
         self.nodes = [Location("Soulink Shrine", generate_content_flag=False)]
+        # Adjusting the path inside the Map class
+        if locations_csv_path:
+            locations_csv_path = resource_path(locations_csv_path)
+        else:
+            locations_csv_path = resource_path('src/tests/locations.csv')
+        
         location_names = self.load_location_names(locations_csv_path)
         random.shuffle(location_names)
         extended_location_names = (location_names * ((size // len(location_names)) + 1))[:size-1]
@@ -200,6 +215,7 @@ class Map:
             for row in reader:
                 names.append(row['Location'])
         return names
+
 
     def generate_graph(self):
         for i in range(len(self.nodes) - 1):
@@ -486,30 +502,34 @@ class LocationGlossaryScreen(GameScreen):
         self.print_dashes()
         print("Rooms List:".center(90))
         self.print_dashes()
-        for i, node in enumerate(self.game_loop.graph.nodes):
+        for i, node in enumerate(self.game_loop.map.nodes):
             print(f"{i + 1}. {node.name}")
         print("\n0. Back")
         self.print_dashes()
-        choice = input("\nEnter your choice to see connections or 0 to go back: ")
-        
-        if choice.isdigit():
-            choice = int(choice) - 1
-            if 0 <= choice < len(self.game_loop.graph.nodes):
-                self.display_connections(self.game_loop.graph.nodes[choice])
-            elif choice == -1:
-                return
-            else:
-                print("Invalid choice.")
-                input("Press Enter to try again...")
-                self.display()
+        choice = int(input("\nEnter your choice to see connections or 0 to go back: "))
+
+        if choice == 0:
+            return  # Go back to previous screen or exit
+        elif 0 < choice <= len(self.game_loop.map.nodes):
+            self.display_connections(self.game_loop.map.nodes[choice - 1])
         else:
-            print("Please enter a number.")
+            print("Invalid choice.")
             input("Press Enter to try again...")
             self.display()
 
     def display_connections(self, node):
-        detail_screen = LocationDetailScreen(self.location, self.game_loop, node)
-        detail_screen.display()
+        self.clear_screen()
+        self.print_dashes()
+        print(f"Room Details: {node.name}".center(90))
+        self.print_dashes()
+        print("Connections and Encounters:")
+        for i, connected_node in enumerate(node.connections):
+            visit_status = "Not Visited" if not connected_node.visited else "Visited"
+            print(f" {i + 1}. {connected_node.name} - {visit_status}")
+        self.print_dashes()
+        input("Press Enter to return...")
+        self.display()
+
 
 #==========================================#
 #     GLOSSARY DETAILS SUBDIRECTORY UI     #
@@ -858,11 +878,10 @@ class DefeatScreen(GameScreen):
 #       STATE ENGINE (UI CONTROLLER)       #
 #==========================================#
 
-
 class StateEngine:
-    def __init__(self, size=8):
-        self.graph = Map(size)
-        self.current_node = self.graph.nodes[0]
+    def __init__(self, map_instance=None):
+        self.map = map_instance
+        self.current_node = self.map.nodes[0] if self.map else None
         self.previous_node = None
         self.player = Player()
         self.coming_from_vendor = False
@@ -874,16 +893,12 @@ class StateEngine:
             self.current_screen = VictoryScreen(self.current_node, self)
         elif isinstance(self.current_node.content, Enemy) and self.current_node.content.is_alive():
             self.current_screen = CombatScreen(self.current_node, self.player, self.current_node.content, self)
-        # Check if the current content is a Vendor and if we are not coming from the vendor screen
         elif isinstance(self.current_node.content, Vendor) and not self.coming_from_vendor:
             self.current_screen = VendorScreen(self.current_node, self.player, self)
-            self.coming_from_vendor = True  # Set the flag when entering the vendor screen
+            self.coming_from_vendor = True
         else:
             self.current_screen = ExplorationScreen(self.current_node, self)
-            self.coming_from_vendor = False  # Reset the flag to ensure correct flow for next interactions
-
-
-
+            self.coming_from_vendor = False
 
     def play(self):
         while self.player.is_alive() and not self.have_defeated_all_enemies():
@@ -896,14 +911,26 @@ class StateEngine:
             VictoryScreen(self.current_node).display()
 
     def have_defeated_all_enemies(self):
-        # Iterate through each node in the graph and check if the content is an Enemy and if it's alive
-        return not any(isinstance(node.content, Enemy) and node.content.is_alive() for node in self.graph.nodes)
+        return not any(isinstance(node.content, Enemy) and node.content.is_alive() for node in self.map.nodes)
+
+
 
 #==========================================#
 #             MODULE  CHECKING             #
 #==========================================#
 
 if __name__ == "__main__":
-    Magic.load_magic_from_csv('src/tests/scrolls.csv')
-    game = StateEngine()
+    scrolls_path = resource_path('scrolls.csv')
+    enemies_path = resource_path('enemies.csv')
+    locations_path = resource_path('locations.csv')
+
+    Magic.load_magic_from_csv(scrolls_path)
+    Enemy.load_enemies_from_csv(enemies_path)
+    
+    game_map = Map(size=8, locations_csv_path='locations.csv')
+
+    game = StateEngine(map_instance=game_map)
     game.play()
+
+
+
