@@ -4,10 +4,19 @@ import random
 import csv
 import textwrap
 
+
+
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
     return os.path.join(base_path, relative_path)
+
+print(os.listdir(resource_path("")))
 
 
 #==========================================#
@@ -923,6 +932,7 @@ if __name__ == "__main__":
     scrolls_path = resource_path('scrolls.csv')
     enemies_path = resource_path('enemies.csv')
     locations_path = resource_path('locations.csv')
+
 
     Magic.load_magic_from_csv(scrolls_path)
     Enemy.load_enemies_from_csv(enemies_path)
