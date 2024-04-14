@@ -8,19 +8,42 @@ THRILL is a text-based navigation game developed in Python, where players aim to
 
 - **Text-based User Interface**: Interact with the game through a simple and intuitive text-based interface.
 
+- **Combat System**: Engage in turn-based combat at each location (except the goal node). Players and enemies exchange blows, with actions determined by the player's strategic choices.
+
+- **Player Encounter Actions**: Players can choose from several actions during combat:
+  - **Attack**: Deal damage to enemies and gain fury.
+  - **Defend**: Reduce incoming damage and significantly increase fury.
+  - **Rage**: Boost attack damage at the cost of fury.
+  - **Heal**: Restore health using fury.
+  - **Flee**: Escape from combat by using a substantial amount of fury, reverting to the previous location.
+
+- **Glossary**: Access a detailed glossary from the exploration screen explaining key terms such as HP, Fury, Attack Damage, and specific actions, enhancing player understanding of game mechanics.
+
 - **Hint System**: At any point, players can request a hint that provides the shortest path to the goal using Dijkstra's algorithm.
 
-- **Victory and Game Over Screens**: The game acknowledges the player's success upon reaching the goal and allows for easy game termination at any point.
+- **Victory and Game Over Screens**: The game acknowledges the player's success upon reaching the goal and provides a distinct game over screen if the player is defeated in combat.
 
 ## How to Play
 
 1. **Start the Game**: Run the game script in a Python environment.
 
-2. **Navigate**: Use the number keys to choose a path from the available connections at each location.
+2. **Navigate**: Use the number keys to choose a path from the available connections at each location. Each new location may trigger a combat scenario.
 
-3. **Use Hints**: Press 'H' during gameplay to receive guidance on the shortest path to the goal.
+3. **Engage in Combat**: When encountering enemies:
+   - Choose your action:
+     - **Attack** ('A'): Deal damage and gain fury.
+     - **Defend** ('D'): Minimize incoming damage and increase fury.
+     - **Rage** ('R'): Consume fury to increase your attack power.
+     - **Heal** ('H'): Use fury to recover health.
+     - **Flee** ('F'): Use fury to escape combat and return to the previous location.
 
-4. **Quit Anytime**: Press 'Q' to quit the game at any point.
+4. **Access Glossary**: Press 'G' to access the glossary and learn about game mechanics and terms.
+
+5. **Use Hints**: Press 'H' during gameplay to receive guidance on the shortest path to the goal.
+
+6. **Victory or Defeat**: Reach the game's goal to win or face defeat if your HP reaches zero in combat.
+
+7. **Quit Anytime**: Press 'Q' to quit the game at any point.
 
 ## Game Design
 
@@ -58,5 +81,5 @@ Contributions are welcome! Please reach out to me before you attempt to submit p
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE.md).
+This project is licensed under the [MIT License](./LICENSE).
 
