@@ -1,0 +1,7 @@
+implement:
+
+enemy name, hp, defense variety
+
+location name variety
+
+logging system to keep track of previously visited locations (maybe)
