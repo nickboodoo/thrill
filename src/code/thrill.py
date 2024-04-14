@@ -86,7 +86,8 @@ class ExplorationScreen(GameScreen):
         new_location.visited = True
         self.game_loop.current_node = new_location
         if not new_location.is_goal:
-            CombatScreen(new_location, self.game_loop).display()
+            enemy = Enemy(100, 10, 2)  # Define the enemy here or get from context
+            CombatScreen(new_location, self.game_loop, enemy).display()
 
 class HintScreen(GameScreen):
     def display(self):
@@ -115,38 +116,52 @@ class VictoryScreen(GameScreen):
 #==========================================#
 
 class CombatScreen(GameScreen):
-    def __init__(self, location, game_loop):
+    def __init__(self, location, game_loop, enemy):
         super().__init__(location, game_loop)
-        self.enemy = Enemy(100, 10, 2)
-        self.player = self.game_loop.player
+        self.enemy = enemy
+        self.player = game_loop.player  # Assuming the player is accessible via game_loop
+
+    def display_health_bar(self, current, maximum, length=20, label="HP"):
+        filled_length = int(length * current // maximum)
+        bar = '█' * filled_length + '-' * (length - filled_length)
+        return f"{label}\t\t\t [{bar}] {current}/{maximum}".ljust(40)
 
     def display(self):
         while self.player.is_alive() and self.enemy.is_alive():
             self.clear_screen()
-            print(f"Player HP: {self.player.hp}/{self.player.max_hp}  Fury: {self.player.fury}/{self.player.max_fury}")
-            print(f"Enemy HP: {self.enemy.hp}/{self.enemy.max_hp}")
+            self.print_dashes()
+            print(self.display_health_bar(self.player.hp, self.player.max_hp, 30, "Player HP"))
+            print(self.display_health_bar(self.player.fury, self.player.max_fury, 30, "\nFury    "))
+            print(self.display_health_bar(self.enemy.hp, self.enemy.max_hp, 30, "\n\nEnemy HP"))
+            self.print_dashes()
             print("Actions: [A]ttack [D]efend [R]age [H]eal [F]lee")
             action = input("Choose your action: ").lower()
 
+            valid_action = False
+
             if action == "a":
+                valid_action = True
                 damage = random.randint(1, self.player.attack_damage)
                 self.enemy.take_damage(damage)
                 self.player.fury = min(self.player.max_fury, self.player.fury + 5)
                 print(f"You attacked the enemy dealing {damage} damage. Your fury increased to {self.player.fury}.")
 
             elif action == "d":
+                valid_action = True
                 damage = self.enemy.attack_damage * 0.25
                 self.player.take_damage(damage)
                 self.player.fury = min(self.player.max_fury, self.player.fury + int(self.enemy.attack_damage * 2))
                 print(f"You defended. Enemy attacked and you took {damage} damage. Fury increased to {self.player.fury}.")
 
             elif action == "r":
+                valid_action = True
                 if self.player.fury >= 15:
                     self.player.fury -= 15
-                    self.player.attack_damage += 5  # Increasing attack damage temporarily
+                    self.player.attack_damage += 5  # Temporarily increase attack damage
                     print(f"Rage activated! Attack damage increased to {self.player.attack_damage}. Fury reduced to {self.player.fury}.")
 
             elif action == "h":
+                valid_action = True
                 if self.player.fury > 0:
                     heal_amount = min(self.player.max_hp - self.player.hp, self.player.fury)
                     self.player.hp += heal_amount
@@ -155,20 +170,24 @@ class CombatScreen(GameScreen):
 
             elif action == "f":
                 if self.player.fury >= 50:
+                    valid_action = True
                     self.player.fury -= 50
                     print("You fled the battle. Returning to the previous location...")
                     self.game_loop.current_node = self.game_loop.previous_node
+                    self.game_loop.update_screen()  # Make sure to return to the exploration screen or similar
                     break
 
-            if self.enemy.is_alive():
+            if not valid_action:
+                print("You did not enter a correct input, get rekt I guess!.")
+            
+            if self.enemy.is_alive() and (not valid_action or valid_action):
                 enemy_damage = self.enemy.attack_damage
                 self.player.take_damage(enemy_damage)
                 print(f"The enemy attacks back dealing {enemy_damage} damage to you. Your HP is now {self.player.hp}.")
 
             if not self.enemy.is_alive():
-                print("Enemy defeated!")
-                input("Press Enter to continue...")
-                break
+                CombatVictoryScreen(self.location, self.game_loop).display()
+                break  # Break out of the combat loop to prevent further actions
 
             if not self.player.is_alive():
                 print("You have been defeated!")
@@ -176,6 +195,17 @@ class CombatScreen(GameScreen):
                 exit()
 
             input("Press Enter to continue to the next turn...")  # Pause between turns
+
+class CombatVictoryScreen(GameScreen):
+    def display(self):
+        self.clear_screen()
+        self.print_dashes()
+        print("Victory!".center(self.DASH_WIDTH))
+        print("Congratulations! You have defeated the enemy!".center(self.DASH_WIDTH))
+        self.print_dashes()
+        input("\nPress Enter to continue...")
+        self.game_loop.update_screen()  # Return to exploration or next part of the game
+
 
 #==========================================#
 #           GLOSSARY INTERFACES            #
