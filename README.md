@@ -42,19 +42,21 @@ This game utilizes a heap queue to implement the priority queue required by Dijk
 
 ## Installation
 
-bash
+This game requires you to have Python 3.x to run properly. 
 
+bash script:
+```
 git clone https://github.com/nickboodoo/THRILL.git
 
 cd THRILL
 
 python3 thrill.py
-
+```
 ## Contributing
 
 Contributions are welcome! Please reach out to me before you attempt to submit pull requests or open issues for bugs, feature requests, or documentation improvements. Thank you!!
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details.
+This project is licensed under the [MIT License](./LICENSE.md).
 
