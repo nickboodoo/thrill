@@ -55,13 +55,19 @@ The `StateEngine` is the core of THRILL's gameplay mechanics. It manages the cur
 
 THRILL employs a screen-based approach to manage user interactions. Each screen (such as `ExplorationScreen`, `HintScreen`, and `VictoryScreen`) represents a different state of the game. This modular design allows for easy updates and maintenance of each individual part of the game without affecting others.
 
-### Dijkstra's Algorithm
+### Tree and Tree Traversal
 
-The game utilizes Dijkstra's algorithm to compute the shortest path from the current location to the goal. This algorithm helps in providing hints to the player, making it easier to navigate complex maps efficiently. The implementation relies on maintaining a priority queue to explore the most promising paths first.
+- **Graph/Tree Structure**
+  - The `Map` class constructs a linear sequence of connected `Location` nodes, potentially with additional random connections. The primary structure is tree-like with the possibility of cycles due to additional edges, which technically makes it a graph. However, since each location only connects to its subsequent and possibly some random locations, it retains a somewhat hierarchical, tree-like structure.
 
-### heapq
+- **Traversal**
+  - **Exploration Traversal**
+    - When players move from one location to another, they are effectively performing a traversal of this graph/tree. The traversal in this game can be akin to a depth-first search (DFS) or breadth-first search (BFS), depending on how the player chooses to explore the connections.
+  - **Pathfinding with Dijkstra's Algorithm**
+    - In the `HintScreen`, there's an implementation of Dijkstra’s algorithm to find the shortest path to the goal, which is a form of graph traversal optimized for graphs with weighted edges (though the weights are uniform here). This provides players with guidance on how to reach the goal location efficiently, functioning similarly to a level-order traversal by exploring the shortest path first.
 
-This game utilizes a heap queue to implement the priority queue required by Dijkstra's algorithm. It allows the game to quickly determine the next location to explore based on the shortest known distance from the start, facilitating efficient pathfinding across the game map.
+- **Dynamic Tree Traversal**
+  - The game allows dynamic traversal where the player can choose their path at runtime. This is particularly evident in how the `ExplorationScreen` lets the player choose which location to move to next, allowing for a personalized traversal experience.
 
 ## Installation
 
