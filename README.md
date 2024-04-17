@@ -71,16 +71,8 @@ THRILL employs a screen-based approach to manage user interactions. Each screen 
 
 ## Installation
 
-This game requires you to have Python 3.x to run properly. 
+To download and play this game navigate to the latest [release](https://github.com/nickboodoo/thrill/releases).
 
-bash script:
-```
-git clone https://github.com/nickboodoo/THRILL.git
-
-cd THRILL
-
-python3 thrill.py
-```
 ## Contributing
 
 Contributions are welcome! Please reach out to me before you attempt to submit pull requests or open issues for bugs, feature requests, or documentation improvements. Thank you!!
