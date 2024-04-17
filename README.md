@@ -2,6 +2,32 @@
 
 THRILL is a text-based navigation game developed in Python, where players aim to reach a designated "goal location" on a dynamically generated map. The game leverages a simple text-based interface and utilizes Dijkstra's algorithm to offer hints on finding the shortest path to the goal.
 
+## Installation
+
+To play this game, download the latest [release](https://github.com/nickboodoo/thrill/releases).
+
+## How to Play
+
+1. **Start the Game**: Double-click on the thrill.exe file that you just downloaded from the release page. 
+
+2. **Navigate**: Use the number keys to choose a path from the available connections at each location. Each new location may trigger a combat scenario.
+
+3. **Engage in Combat**: When encountering enemies:
+   - Choose your action:
+     - **Attack** ('A'): Deal damage and gain fury.
+     - **Defend** ('D'): Minimize incoming damage and increase fury.
+     - **Rage** ('R'): Consume fury to increase your attack power.
+     - **Heal** ('H'): Use fury to recover health.
+     - **Flee** ('F'): Use fury to escape combat and return to the previous location.
+
+4. **Access Glossary**: Press 'G' to access the glossary and learn about game mechanics and terms.
+
+5. **Use Hints**: Press 'H' during gameplay to receive guidance on the shortest path to the goal.
+
+6. **Victory or Defeat**: Reach the game's goal to win or face defeat if your HP reaches zero in combat.
+
+7. **Quit Anytime**: Press 'Q' to quit the game at any point.
+
 ## Features
 
 - **Dynamic Map Generation**: The game generates a new map for each session, with locations connected in various ways to challenge the player.
@@ -22,28 +48,6 @@ THRILL is a text-based navigation game developed in Python, where players aim to
 - **Hint System**: At any point, players can request a hint that provides the shortest path to the goal using Dijkstra's algorithm.
 
 - **Victory and Game Over Screens**: The game acknowledges the player's success upon reaching the goal and provides a distinct game over screen if the player is defeated in combat.
-
-## How to Play
-
-1. **Start the Game**: Run the game script in a Python environment.
-
-2. **Navigate**: Use the number keys to choose a path from the available connections at each location. Each new location may trigger a combat scenario.
-
-3. **Engage in Combat**: When encountering enemies:
-   - Choose your action:
-     - **Attack** ('A'): Deal damage and gain fury.
-     - **Defend** ('D'): Minimize incoming damage and increase fury.
-     - **Rage** ('R'): Consume fury to increase your attack power.
-     - **Heal** ('H'): Use fury to recover health.
-     - **Flee** ('F'): Use fury to escape combat and return to the previous location.
-
-4. **Access Glossary**: Press 'G' to access the glossary and learn about game mechanics and terms.
-
-5. **Use Hints**: Press 'H' during gameplay to receive guidance on the shortest path to the goal.
-
-6. **Victory or Defeat**: Reach the game's goal to win or face defeat if your HP reaches zero in combat.
-
-7. **Quit Anytime**: Press 'Q' to quit the game at any point.
 
 ## Game Design
 
@@ -68,10 +72,6 @@ THRILL employs a screen-based approach to manage user interactions. Each screen 
 
 - **Dynamic Tree Traversal**
   - The game allows dynamic traversal where the player can choose their path at runtime. This is particularly evident in how the `ExplorationScreen` lets the player choose which location to move to next, allowing for a personalized traversal experience.
-
-## Installation
-
-To download and play this game navigate to the latest [release](https://github.com/nickboodoo/thrill/releases).
 
 ## Contributing
 
