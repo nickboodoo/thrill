@@ -6,10 +6,9 @@ location name variety
 
 logging system to keep track of previously visited locations (maybe)
 
-make combat damage text display the post-mitigation damage
-
 add armor stat to glossary to explain
 
 explain combat in glossary
     managing resources
     damage mitigation
+

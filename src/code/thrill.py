@@ -86,7 +86,7 @@ class ExplorationScreen(GameScreen):
         new_location.visited = True
         self.game_loop.current_node = new_location
         if not new_location.is_goal:
-            enemy = Enemy(100, 10, 2)  # Define the enemy here or get from context
+            enemy = Enemy(100, 10, 2)
             CombatScreen(new_location, self.game_loop, enemy).display()
 
 class HintScreen(GameScreen):
@@ -119,7 +119,7 @@ class CombatScreen(GameScreen):
     def __init__(self, location, game_loop, enemy):
         super().__init__(location, game_loop)
         self.enemy = enemy
-        self.player = game_loop.player  # Assuming the player is accessible via game_loop
+        self.player = game_loop.player
 
     def display_health_bar(self, current, maximum, length=20, label="HP"):
         filled_length = int(length * current // maximum)
@@ -142,22 +142,24 @@ class CombatScreen(GameScreen):
             if action == "a":
                 valid_action = True
                 damage = random.randint(1, self.player.attack_damage)
+                actual_damage = max(0, damage - self.enemy.defense)
                 self.enemy.take_damage(damage)
                 self.player.fury = min(self.player.max_fury, self.player.fury + 5)
-                print(f"You attacked the enemy dealing {damage} damage. Your fury increased to {self.player.fury}.")
+                print(f"You attacked the enemy dealing {actual_damage} (post-mitigation) damage. Your fury increased to {self.player.fury}.")
 
             elif action == "d":
                 valid_action = True
-                damage = self.enemy.attack_damage * 0.25
-                self.player.take_damage(damage)
-                self.player.fury = min(self.player.max_fury, self.player.fury + int(self.enemy.attack_damage * 2))
-                print(f"You defended. Enemy attacked and you took {damage} damage. Fury increased to {self.player.fury}.")
+                enemy_damage = random.randint(1, self.enemy.attack_damage)
+                actual_player_damage = max(0, enemy_damage - self.player.defense * 0.25)
+                self.player.take_damage(enemy_damage)
+                self.player.fury = min(self.player.max_fury, self.player.fury + int(enemy_damage * 2))
+                print(f"You defended. Enemy attacked and you took {actual_player_damage} (post-mitigation) damage. Fury increased to {self.player.fury}.")
 
             elif action == "r":
                 valid_action = True
                 if self.player.fury >= 15:
                     self.player.fury -= 15
-                    self.player.attack_damage += 5  # Temporarily increase attack damage
+                    self.player.attack_damage += 5
                     print(f"Rage activated! Attack damage increased to {self.player.attack_damage}. Fury reduced to {self.player.fury}.")
 
             elif action == "h":
@@ -174,27 +176,28 @@ class CombatScreen(GameScreen):
                     self.player.fury -= 50
                     print("You fled the battle. Returning to the previous location...")
                     self.game_loop.current_node = self.game_loop.previous_node
-                    self.game_loop.update_screen()  # Make sure to return to the exploration screen or similar
+                    self.game_loop.update_screen()
                     break
 
             if not valid_action:
-                print("You did not enter a correct input, get rekt I guess!.")
-            
-            if self.enemy.is_alive() and (not valid_action or valid_action):
-                enemy_damage = self.enemy.attack_damage
+                print("Your turn was skipped because you didn't enter a correct input, get rekt.")
+
+            if self.enemy.is_alive():
+                enemy_damage = random.randint(1, self.enemy.attack_damage)
+                actual_player_damage = max(0, enemy_damage - self.player.defense)
                 self.player.take_damage(enemy_damage)
-                print(f"The enemy attacks back dealing {enemy_damage} damage to you. Your HP is now {self.player.hp}.")
+                print(f"The enemy attacks back dealing {actual_player_damage} (post-mitigation) damage to you. Your HP is now {self.player.hp}.")
 
             if not self.enemy.is_alive():
                 CombatVictoryScreen(self.location, self.game_loop).display()
-                break  # Break out of the combat loop to prevent further actions
+                break
 
             if not self.player.is_alive():
                 print("You have been defeated!")
                 input("Press Enter to exit...")
                 exit()
 
-            input("Press Enter to continue to the next turn...")  # Pause between turns
+            input("Press Enter to continue to the next turn...")
 
 class CombatVictoryScreen(GameScreen):
     def display(self):
@@ -204,7 +207,7 @@ class CombatVictoryScreen(GameScreen):
         print("Congratulations! You have defeated the enemy!".center(self.DASH_WIDTH))
         self.print_dashes()
         input("\nPress Enter to continue...")
-        self.game_loop.update_screen()  # Return to exploration or next part of the game
+        self.game_loop.update_screen()
 
 
 #==========================================#
