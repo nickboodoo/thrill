@@ -246,7 +246,7 @@ class SubGlossaryScreen(GameScreen):
         super().__init__(None, game_loop)
         self.term = term
         self.descriptions = {
-            "HP": "Health Points: Determines how much damage you can take before you're defeated.",
+            "HP": "(Health Points) Determines how much damage you can take before you're defeated.",
             "Fury": "A resource used to perform special actions like Rage, Heal, and Flee.",
             "Attack Damage": "The potential maximum damage you can deal to enemies in one attack.",
             "Defense": "Reduces the amount of damage you receive from enemy attacks.",
