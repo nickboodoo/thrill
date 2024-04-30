@@ -24,23 +24,28 @@ def is_perfect_number(n):
     return sum_divisors == n
 
 def main():
-    try:
-        number = int(input("Enter a number to find its prime factors and check if it's a perfect number: "))
-        if number <= 1:
-            print("Please enter a number greater than 1.")
-        else:
-            factors = prime_factors(number)
-            if factors:
-                print("Prime factors of", number, "are:", factors)
+    while True:
+        try:
+            number = int(input("Enter a number to find its prime factors and check if it's a perfect number (or type 'exit' to quit): "))
+            if number <= 1:
+                print("Please enter a number greater than 1.")
             else:
-                print("No prime factors, the number is prime itself.")
+                factors = prime_factors(number)
+                if factors:
+                    print("Prime factors of", number, "are:", factors)
+                else:
+                    print("No prime factors, the number is prime itself.")
 
-            if is_perfect_number(number):
-                print(number, "is a perfect number.")
+                if is_perfect_number(number):
+                    print(number, "is a perfect number.")
+                else:
+                    print(number, "is not a perfect number.")
+        except ValueError as e:
+            if str(e) == "invalid literal for int() with base 10: 'exit'":
+                print("Exiting the program. Goodbye!")
+                break
             else:
-                print(number, "is not a perfect number.")
-    except ValueError:
-        print("Please enter a valid integer.")
+                print("Please enter a valid integer or 'exit'.")
 
 if __name__ == "__main__":
     main()
