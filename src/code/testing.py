@@ -19,11 +19,16 @@ def prime_factors(n):
 
 def is_perfect_number(n):
     sum_divisors = 1
+    # Check for divisors and add them
     for i in range(2, int(n**0.5) + 1):
         if n % i == 0:
             sum_divisors += i
             if i != n // i:
                 sum_divisors += n // i
+            # Early exit if sum exceeds n
+            if sum_divisors > n:
+                return False
+    # Check the sum of the divisors to determine if the number is perfect
     return sum_divisors == n
 
 def main():
